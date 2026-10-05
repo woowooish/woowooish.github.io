@@ -130,6 +130,7 @@ assert.equal((markup.match(/id="motion-toggle"/g)||[]).length,1);
 assert.equal((markup.match(/class="both-and-practice"/g)||[]).length,1);
 assert.equal((markup.match(/class="both-and-step"/g)||[]).length,3);
 assert.match(markup,/More than one thing/);
+assert.match(markup,/practice I keep returning to: meeting ordinary life with a little more calm, peace and love/,'Annie section should state the brand purpose in Annie’s own voice');
 for (const fieldId of ['newsletter-form-email','contact-form-name','contact-form-email','contact-form-message']) {
   assert(markup.includes(`for="${fieldId}"`),`missing explicit label for ${fieldId}`);
 }
@@ -179,5 +180,5 @@ async function checkCopyFallbacks() {
   assert.equal((markup.match(/\breadonly(?:="[^"]*")?[\s>]/g)||[]).length,2);
 }
 checkCopyFallbacks().then(()=>{
-  console.log('PASS: both-and practice, labelled forms, motion preference and control, timer and UI transitions, email drafts, manual and clipboard copy, interest actions, anchors and local assets. No email sent.');
+  console.log('PASS: brand purpose, both-and practice, labelled forms, motion preference and control, timer and UI transitions, email drafts, manual and clipboard copy, interest actions, anchors and local assets. No email sent.');
 }).catch(error=>{console.error(error);process.exitCode=1;});
