@@ -21,6 +21,8 @@ The site uses plain HTML, CSS and JavaScript. No build system, dependency instal
 
 Newsletter and contact forms validate inputs and prepare an email draft addressed to `woowooish@gmail.com`. Visitors review the draft and send it from their email application. No message is sent automatically. The Tide is an interest request, not an automatic subscription; there is no newsletter platform connected yet. No visitor details are stored on the website.
 
+Every editable form control has an explicit HTML label. Contact labels stay visible after a visitor starts typing; the compact newsletter field uses a screen-reader label while keeping the approved pill layout.
+
 After preparing a draft, visitors can use the email-app link or expand “Use another email service” to copy the full draft. Where clipboard writing is unavailable or denied, the control selects the draft for manual copying. Editing the form or choosing a new gathering idea clears the old draft. A delayed clipboard result cannot restore an obsolete draft status.
 
 Gathering cards are explicitly ideas with no scheduled dates or places. Each “I’m interested” button pre-fills a contact inquiry; it does not reserve a place. Confirm the event schedule before accepting bookings.
