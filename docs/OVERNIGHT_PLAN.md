@@ -6,7 +6,7 @@ The user authorized ongoing improvements and publishing to `woowooish.com` in `w
 
 Six scheduled passes start approximately 02:00 through 07:00 on October 5, 2026 in `America/Los_Angeles`. Each flexible run may occur within the following hour. This is a bounded set of scheduled passes, not continuous background execution. The automation ends after six occurrences.
 
-Scheduled passes completed: **2 / 6**. Increment this counter and add a dated entry after each pass. The sixth pass should provide the morning report. If runs overlap, preserve concurrent changes, use fast-forward updates, and never force-push. Read the current branch at the beginning of every pass; this document is the durable handoff, not the local scratch folder.
+Scheduled passes completed: **3 / 6**. Increment this counter and add a dated entry after each pass. The sixth pass should provide the morning report. If runs overlap, preserve concurrent changes, use fast-forward updates, and never force-push. Read the current branch at the beginning of every pass; this document is the durable handoff, not the local scratch folder.
 
 ## Priorities
 
@@ -70,3 +70,17 @@ Published in commit `da6ad143ea0cd7948387eb1c126d4ce16bd387ef`. GitHub Pages run
 Launch observation: the signed-in GitHub Pages UI still showed `CertificateRequested` (1 of 3), DNS check in progress and Enforce HTTPS unavailable. The setting was not changed and the custom domain was not reset. Browser visual QA remains pending HTTPS.
 
 Next priority: check certificate state first. If secure access becomes available, enable Enforce HTTPS and do full desktop and responsive browser QA. If it remains pending, audit one remaining meaningful accessibility or content issue without unnecessary redesign.
+
+### Pass 3 — October 5, 2026, approximately 04:05 PDT
+
+Completed the launch priority. GitHub Pages initially still showed certificate provisioning at step 1 of 3 with Enforce HTTPS disabled. During this pass the certificate became available: the Pages UI changed to `DNS check successful`, Enforce HTTPS became available, and it was enabled. The setting remained on after the final deployment, and `https://woowooish.com` loaded normally without a certificate warning. The custom domain was not removed, replaced or reset.
+
+Completed secure visual QA on the live site at desktop width and in the repository’s 390px phone and 768px tablet frames. The hero, navigation, original portraits, motion control, Annie section, three-minute practice, gathering ideas, reflections, newsletter, contact form and footer were inspected. Headlines, cards, forms and footer remained readable without visible horizontal overflow or clipped controls. The approved navy/aqua coastal treatment and playful typography are intact.
+
+Improved form accessibility without redesigning the page. The contact fields now have persistent visible labels, and the compact Tide email field has an explicit screen-reader label. All labels are associated with their controls in HTML. While exercising those live controls, browser QA found that Chrome does not expose the contact input named `name` through the ambiguous `form.elements.name` property. The handler now uses the standard `namedItem()` method for every form-field lookup; the test double intentionally exposes controls only through `namedItem()` so the same regression will fail locally.
+
+Validation: both JavaScript syntax checks and `node scripts/check-site.cjs` passed. The secure live browser successfully exercised motion pause/play, timer start/pause/reset, a native reflection disclosure, Tide draft preparation, contact draft preparation and gathering-interest prefill. Dummy QA values were cleared by reload, no email was opened or sent, and no visitor data was stored. Browser screenshots confirmed the new labels at desktop, 390px and 768px widths.
+
+Published the label work in commit `eb6ba270f40a0d0fb2d5eb869a6d8e9884271fba`; GitHub Pages run `37301648502` completed successfully. Published the browser-discovered contact fix in commit `8c143a399f4e7425f771816ef322535cabb3dc76`; GitHub Pages run `37302925514` completed successfully. The live contact draft then returned the expected status, encoded subject and copy fallback; the live newsletter and gathering-interest paths also passed.
+
+Next priority: treat HTTPS and responsive launch QA as complete unless a later check shows a regression; do not reset the domain. Use the remaining passes for one genuinely useful brand/content improvement or a verified public link, while avoiding speculative events, unverified reel URLs and unnecessary rewrites. Direct subscription still requires an existing user-owned provider; until then the honest email-draft interest flow should remain.
