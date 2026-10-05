@@ -113,6 +113,30 @@ for (const link of document.querySelectorAll('[data-interest]')) {
   });
 }
 
+const motionToggle = document.getElementById('motion-toggle');
+if (motionToggle) {
+  const reduceMotion = typeof matchMedia === 'function' ? matchMedia('(prefers-reduced-motion: reduce)') : null;
+  let userPaused = false;
+
+  function renderMotionPreference() {
+    const systemPaused = Boolean(reduceMotion && reduceMotion.matches);
+    document.documentElement.classList.toggle('motion-paused', systemPaused || userPaused);
+    motionToggle.hidden = systemPaused;
+    motionToggle.setAttribute('aria-pressed', String(userPaused));
+    motionToggle.textContent = userPaused ? 'Play moving decorations' : 'Pause moving decorations';
+  }
+
+  motionToggle.addEventListener('click', function () {
+    userPaused = !userPaused;
+    renderMotionPreference();
+  });
+  if (reduceMotion) {
+    if (typeof reduceMotion.addEventListener === 'function') reduceMotion.addEventListener('change', renderMotionPreference);
+    else if (typeof reduceMotion.addListener === 'function') reduceMotion.addListener(renderMotionPreference);
+  }
+  renderMotionPreference();
+}
+
 const pauseToggle = document.getElementById('pause-toggle');
 if (pauseToggle && typeof WoowooishPause !== 'undefined') {
   const timer = WoowooishPause.createTimer();

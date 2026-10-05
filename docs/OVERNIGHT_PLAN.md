@@ -6,7 +6,7 @@ The user authorized ongoing improvements and publishing to `woowooish.com` in `w
 
 Six scheduled passes start approximately 02:00 through 07:00 on October 5, 2026 in `America/Los_Angeles`. Each flexible run may occur within the following hour. This is a bounded set of scheduled passes, not continuous background execution. The automation ends after six occurrences.
 
-Scheduled passes completed: **1 / 6**. Increment this counter and add a dated entry after each pass. The sixth pass should provide the morning report. If runs overlap, preserve concurrent changes, use fast-forward updates, and never force-push. Read the current branch at the beginning of every pass; this document is the durable handoff, not the local scratch folder.
+Scheduled passes completed: **2 / 6**. Increment this counter and add a dated entry after each pass. The sixth pass should provide the morning report. If runs overlap, preserve concurrent changes, use fast-forward updates, and never force-push. Read the current branch at the beginning of every pass; this document is the durable handoff, not the local scratch folder.
 
 ## Priorities
 
@@ -58,3 +58,13 @@ Published in commit `2ce4ee5e35f8cae95f247bae281038a0b7b702ef`. GitHub Pages run
 Launch observations: HTTP returned 200 at the beginning of the pass; HTTPS returned 502. The signed-in Pages UI still showed `CertificateRequested` (1 of 3), DNS check in progress, and Enforce HTTPS unavailable. Fresh Google DNS-over-HTTPS answers returned exactly the four GitHub Pages A records and `www` CNAME `woowooish.github.io`. The custom domain was not reset. Browser visual checks remain pending secure access.
 
 Next priority: recheck provisioning and perform desktop/390px/768px browser QA when HTTPS works. If it remains pending, look for a meaningful accessibility or content issue rather than gratuitously rewriting the existing reflections. A real newsletter provider and verified reel media remain unavailable decisions, not reasons to invent integrations.
+
+### Pass 2 — October 5, 2026, approximately 03:10 PDT
+
+Completed an accessibility improvement for the reference design’s continuous motion. A visible, keyboard-accessible hero control now pauses and resumes the scrolling phrase marquee and rotating seal together. It uses an `aria-pressed` state and describes the next action. The page continues to obey `prefers-reduced-motion`: when a visitor requests reduced motion, the decorative animations stop automatically and the redundant button stays hidden. No essential content depends on animation.
+
+Validation before publication: JavaScript syntax and the full site interaction suite passed. New tests exercise the pause/play state, page animation class, live changes to the operating-system preference, control visibility and unique markup. Existing timer, forms, copy fallback, interest, internal anchor and asset checks still pass. Deployment and served-byte verification are the final checks for this pass.
+
+Launch observation: the signed-in GitHub Pages UI still showed `CertificateRequested` (1 of 3), DNS check in progress and Enforce HTTPS unavailable. The setting was not changed and the custom domain was not reset. Browser visual QA remains pending HTTPS.
+
+Next priority: check certificate state first. If secure access becomes available, enable Enforce HTTPS and do full desktop and responsive browser QA. If it remains pending, audit one remaining meaningful accessibility or content issue without unnecessary redesign.

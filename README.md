@@ -27,6 +27,8 @@ Gathering cards are explicitly ideas with no scheduled dates or places. Each “
 
 The site includes four original readable reflections and an external Instagram profile link. Add specific post/reel links only when verified; do not imply that the original reflections are published reels. The free written practice works without JavaScript; its optional timer follows three one-minute stages and supports pausing and restarting.
 
+The hero includes a keyboard-accessible control that pauses or plays the decorative marquee and rotating seal. The site automatically stops those animations and hides the redundant control when the visitor has enabled reduced motion at the operating-system or browser level.
+
 ## Local preview
 
 From the repository folder, run `python3 -m http.server 8000`, then open `http://localhost:8000`. Changes to `main` trigger the existing GitHub Pages deployment. Check desktop and phone layouts and both forms before publishing edits.

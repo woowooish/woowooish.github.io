@@ -29,9 +29,10 @@ timer.reset();
 assert.equal(timer.snapshot().state, 'idle');
 
 const nodes = {};
+const documentClasses = new Set();
 function node(id) {
   return nodes[id] ??= {id, hidden:true, href:'', textContent:'', disabled:true,
-    focus(){this.focused=true;},select(){this.selected=true;},setSelectionRange(start,end){this.selection=[start,end];},classList:{toggle(){}},
+    attributes:{},focus(){this.focused=true;},select(){this.selected=true;},setSelectionRange(start,end){this.selection=[start,end];},setAttribute(name,value){this.attributes[name]=value;},classList:{toggle(){}},
     addEventListener(type, fn){this[type]=fn;}};
 }
 function form(id, values) {
@@ -46,14 +47,33 @@ const interest = {dataset:{interest:'A walk by the water'},addEventListener(type
 let intervalFn = null;
 let intervalCount = 0;
 let uiNow = 0;
+const reducedMotion = {matches:false,addEventListener(type,fn){this[type]=fn;}};
 const context = {
   navigator:{},
-  document:{getElementById:node, querySelectorAll(){return [interest];},addEventListener(){}},
+  matchMedia(){return reducedMotion;},
+  document:{documentElement:{classList:{toggle(name,on){if(on)documentClasses.add(name);else documentClasses.delete(name);}}},getElementById:node, querySelectorAll(){return [interest];},addEventListener(){}},
   WoowooishPause:{createTimer:()=>createTimer(()=>uiNow)},
   setInterval(fn){intervalFn=fn;intervalCount++;return intervalCount;},
   clearInterval(){intervalFn=null;},
 };
 vm.runInNewContext(fs.readFileSync(path.join(root,'assets/site.js'),'utf8'),context);
+const motion = node('motion-toggle');
+assert.equal(motion.hidden,false);
+assert.equal(motion.attributes['aria-pressed'],'false');
+assert.equal(motion.textContent,'Pause moving decorations');
+assert.equal(documentClasses.has('motion-paused'),false);
+motion.click();
+assert.equal(motion.attributes['aria-pressed'],'true');
+assert.equal(motion.textContent,'Play moving decorations');
+assert.equal(documentClasses.has('motion-paused'),true);
+motion.click();
+assert.equal(documentClasses.has('motion-paused'),false);
+reducedMotion.matches=true; reducedMotion.change();
+assert.equal(motion.hidden,true,'system reduced motion makes the redundant control unnecessary');
+assert.equal(documentClasses.has('motion-paused'),true,'system reduced motion always stops decoration');
+reducedMotion.matches=false; reducedMotion.change();
+assert.equal(motion.hidden,false);
+assert.equal(documentClasses.has('motion-paused'),false);
 const event = {preventDefault(){}};
 newsletter.submit(event);
 let draft = new URL(node('newsletter-form-draft').href);
@@ -105,6 +125,7 @@ for (const match of markup.matchAll(/\b(?:src|href)="(assets\/[^"?#]+)"/g)) {
 }
 assert.equal((markup.match(/class="reflection-card"/g)||[]).length,4);
 assert.equal((markup.match(/data-interest=/g)||[]).length,3);
+assert.equal((markup.match(/id="motion-toggle"/g)||[]).length,1);
 assert(!/Save my spot|salt water heals|good vibes only|reel:/.test(markup),'do not restore misleading reference placeholders');
 assert.equal(fs.readFileSync(path.join(root,'CNAME'),'utf8').trim(),'woowooish.com');
 async function checkCopyFallbacks() {
@@ -150,5 +171,5 @@ async function checkCopyFallbacks() {
   assert.equal((markup.match(/\breadonly(?:="[^"]*")?[\s>]/g)||[]).length,2);
 }
 checkCopyFallbacks().then(()=>{
-  console.log('PASS: timer and UI transitions, email drafts, manual and clipboard copy, denied permission and stale async handling, interest actions, anchors and local assets. No email sent.');
+  console.log('PASS: motion preference and control, timer and UI transitions, email drafts, manual and clipboard copy, interest actions, anchors and local assets. No email sent.');
 }).catch(error=>{console.error(error);process.exitCode=1;});
