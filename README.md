@@ -12,7 +12,7 @@ The site uses plain HTML, CSS and JavaScript. No build system, dependency instal
 - `assets/pause.js`: the independent three-minute clock.
 - `assets/fonts.css` and `assets/fonts/`: fonts from the reference, hosted locally.
 - `assets/annie-beach.webp` and `assets/annie-avatar.webp`: original portrait assets from the reference, optimized for the web.
-- `preview.html`: noindex desktop and mobile preview for visual checking.
+- `preview.html`: noindex phone (390px) and tablet (768px) frames for visual checking; check the main page separately on desktop.
 - `docs/BRAND_GUIDE.md`: voice, visual language and factual content rules.
 - `docs/OVERNIGHT_PLAN.md`: bounded overnight priorities, verification and progress.
 - `scripts/check-site.cjs`: interaction and structural checks; run with `node scripts/check-site.cjs`.

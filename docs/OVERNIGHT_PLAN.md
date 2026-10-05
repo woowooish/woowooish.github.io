@@ -37,7 +37,13 @@ No suitable connected newsletter provider or verified individual reel URLs were 
 
 ## Initial pass verification
 
-At 01:38 PDT on October 5: JavaScript syntax and `node scripts/check-site.cjs` passed. Checks covered timer start/pause/resume/reset/completion, throttled-tab time jumps, UI status transitions, email recipient and Unicode encoding, draft invalidation after edits, gathering interest prefill, unique IDs, internal anchors and local assets. No email was sent. All section and form markup was inspected. Desktop/phone visual checking and deployed-byte checks remain pending; the browser certificate blocker still applies. At 01:39 PDT, GitHub Pages showed certificate requested (1 of 3), Enforce HTTPS unavailable and DNS check in progress after reload.
+The first brand pass was published in commit `1e88c286ef56f611039f70e3f92570f9b5eefc7d`. GitHub Pages run `37285085249` completed successfully, including build, deploy and status reporting.
+
+At approximately 01:40 PDT on October 5: JavaScript syntax and `node scripts/check-site.cjs` passed. Checks covered timer start/pause/resume/reset/completion, throttled-tab time jumps, UI status transitions, email recipient and Unicode encoding, draft invalidation after edits, gathering interest prefill, unique IDs, internal anchors and local assets. No email was sent. All section and form markup was inspected.
+
+HTTP returned 200 and exact local-byte matches for `index.html`, `assets/site.css`, `assets/site.js`, `assets/pause.js`, `assets/fonts.css`, `assets/annie-beach.webp` and `assets/annie-avatar.webp`. HTTPS still returned 502. GitHub Pages showed certificate requested (1 of 3), Enforce HTTPS unavailable and DNS check in progress after reload.
+
+Desktop/phone visual checking remains pending. A local HTML preview attempt was explicitly blocked by the browser URL policy (only HTTP/HTTPS protocols allowed). Do not retry file URLs or circumvent that restriction with another browser surface, raw browser commands or indirect execution. Resume public-site visual checking when HTTPS loads normally. Automated interaction and structural checks are evidence for their specific behavior, not a claim of completed browser visual QA.
 
 ## Scheduled pass log
 
