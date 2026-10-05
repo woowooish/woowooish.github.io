@@ -6,7 +6,7 @@ The user authorized ongoing improvements and publishing to `woowooish.com` in `w
 
 Six scheduled passes start approximately 02:00 through 07:00 on October 5, 2026 in `America/Los_Angeles`. Each flexible run may occur within the following hour. This is a bounded set of scheduled passes, not continuous background execution. The automation ends after six occurrences.
 
-Scheduled passes completed: **5 / 6**. Increment this counter and add a dated entry after each pass. The sixth pass should provide the morning report. If runs overlap, preserve concurrent changes, use fast-forward updates, and never force-push. Read the current branch at the beginning of every pass; this document is the durable handoff, not the local scratch folder.
+Scheduled passes completed: **6 / 6**. The bounded overnight work is complete. If later work resumes, read the current branch first, preserve concurrent changes, use fast-forward updates, and never force-push. This document is the durable handoff, not the local scratch folder.
 
 ## Priorities
 
@@ -102,3 +102,13 @@ Validation: both JavaScript syntax checks and the complete site suite passed, in
 Published in commit `e9c1740a747724301c2272d9ae98d52d2fe83aba`. GitHub Pages run `37317056862` completed successfully.
 
 Next priority: make the sixth pass a restrained final regression pass and morning report rather than another speculative rewrite. Re-read the current head, run the full local checks, confirm HTTPS and the latest Pages deployment, and spot-check the live navigation, practices, reflections and honest email-draft actions. Report live and GitHub links, remaining user-owned decisions (newsletter provider and verified Instagram post URLs), a short pros/cons table and calibrated confidence. Do not reset the domain or create an integration merely to fill the final pass.
+
+### Pass 6 — October 5, 2026, approximately 07:05 PDT
+
+Completed the final launch regression without adding a gratuitous rewrite. The current `main` head at the beginning of the pass was `9ad787050a3b83ef674fd0a4ab9a1a5e22b82ea7`; its GitHub Pages run `37318041364` had completed successfully. Git object hashes for the live HTML, CSS, JavaScript, test suite and this handoff matched the corresponding local files before testing.
+
+Validation: both JavaScript syntax checks and the complete `node scripts/check-site.cjs` suite passed. The public HTTP URL redirected to `https://woowooish.com/`, and the secure homepage loaded with the expected title and content without a certificate warning. Live browser checks passed for motion pause/play, timer start/pause/reset, a native reflection disclosure, newsletter draft preparation, contact draft preparation and gathering-interest prefill. Test values were removed by a final reload, no email was opened or sent, and the clean visitor state was confirmed.
+
+The deployed phone and tablet frames contained the final Annie copy, three both-and steps and four reflections. At the effective 375px and 753px iframe viewports, each document’s scroll width exactly matched its viewport and no button, field, link, summary or textarea crossed the horizontal bounds. Desktop and responsive screenshots retained the approved navy/aqua coastal design, original portraits and playful typography.
+
+No additional public-facing code change was warranted: launch, accessibility, useful practices and honest interest/contact actions are working. No newsletter provider or verified individual Instagram post/reel URLs became available, so no account, invented integration or placeholder media was added. The remaining user-owned decisions are whether to connect an existing newsletter service later and which real Instagram posts should be featured once their exact public URLs are supplied.
