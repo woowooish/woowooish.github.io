@@ -80,6 +80,17 @@ a,button { transition:filter .18s ease, color .18s ease; }
 .step-number {display:grid;place-items:center;flex-shrink:0;width:44px;height:44px;border-radius:50%;background:oklch(0.82 0.1 205);font:14px 'Space Mono',monospace;}
 .pause-steps h3 {margin:0 0 10px;font-size:32px;line-height:1.1;letter-spacing:-.03em;}
 .pause-steps p {margin:0 0 12px;font-size:17px;line-height:1.6;}
+.both-and-practice {position:relative;isolation:isolate;overflow:hidden;display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);gap:clamp(24px,5vw,64px);align-items:center;margin-top:clamp(36px,5vw,64px);padding:clamp(28px,5vw,64px);border-radius:40px;background:oklch(0.27 0.11 252);color:oklch(0.985 0.008 220);}
+.both-and-practice::after {content:"";position:absolute;z-index:-1;width:420px;height:420px;border-radius:50%;right:-180px;top:-220px;background:oklch(0.34 0.13 245);}
+.both-and-intro h3 {margin:18px 0;font-size:clamp(42px,5.5vw,76px);line-height:.92;letter-spacing:-.045em;}
+.both-and-intro .mono-accent {color:oklch(0.82 0.1 205);}
+.both-and-intro p {margin:0;max-width:32em;font-size:18px;line-height:1.65;color:oklch(0.92 0.025 220);}
+.both-and-steps {position:relative;list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:12px;}
+.both-and-step {display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start;padding:20px;border-radius:24px;background:oklch(0.985 0.008 220);color:oklch(0.27 0.11 252);}
+.both-and-number {display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:oklch(0.82 0.1 205);font:13px 'Space Mono',monospace;}
+.both-and-step h4 {margin:2px 0 7px;font-size:23px;line-height:1.1;letter-spacing:-.02em;}
+.both-and-step h4 em {font-family:'Space Mono',monospace;font-weight:400;color:oklch(0.55 0.15 240);}
+.both-and-step p {margin:0;font-size:16px;line-height:1.55;}
 .reflection-grid {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px;align-items:start;}
 .reflection-card {min-width:0;border-radius:28px;overflow:hidden;border:1px solid oklch(0.85 0.05 215);background:oklch(0.985 0.008 220);}
 .reflection-art {height:260px;position:relative;overflow:hidden;background:#b6e9e8;}
@@ -107,6 +118,7 @@ a,button { transition:filter .18s ease, color .18s ease; }
  .pause-layout {grid-template-columns:1fr;}
  .pause-player {padding:28px;}
  .pause-steps li {padding:20px;gap:14px;}
+ .both-and-practice {grid-template-columns:1fr;border-radius:32px;}
  .reflection-art {height:230px;}
 }
 @media(max-width:480px) {

@@ -27,7 +27,7 @@ After preparing a draft, visitors can use the email-app link or expand “Use an
 
 Gathering cards are explicitly ideas with no scheduled dates or places. Each “I’m interested” button pre-fills a contact inquiry; it does not reserve a place. Confirm the event schedule before accepting bookings.
 
-The site includes four original readable reflections and an external Instagram profile link. Add specific post/reel links only when verified; do not imply that the original reflections are published reels. The free written practice works without JavaScript; its optional timer follows three one-minute stages and supports pausing and restarting.
+The site includes four original readable reflections and an external Instagram profile link. Add specific post/reel links only when verified; do not imply that the original reflections are published reels. The free written practice works without JavaScript; its optional timer follows three one-minute stages and supports pausing and restarting. A second, non-timed “both-and” practice offers three short prompts for days when more than one feeling is present.
 
 The hero includes a keyboard-accessible control that pauses or plays the decorative marquee and rotating seal. The site automatically stops those animations and hides the redundant control when the visitor has enabled reduced motion at the operating-system or browser level.
 
