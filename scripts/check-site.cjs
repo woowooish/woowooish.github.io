@@ -177,7 +177,7 @@ async function checkCopyFallbacks() {
   assert.equal(node('contact-form-copy').hidden,true);
   assert.equal(node('contact-form-copy-text').value,'');
   assert.equal((markup.match(/class="draft-copy"/g)||[]).length,2);
-  assert.equal((markup.match(/\breadonly(?:="[^"]*")?[\s>]/g)||[]).length,2);
+  assert.equal((markup.match(/id="(?:newsletter|contact)-form-copy-text"[^>]*\breadonly/g)||[]).length,2);
 }
 checkCopyFallbacks().then(()=>{
   console.log('PASS: brand purpose, both-and practice, labelled forms, motion preference and control, timer and UI transitions, email drafts, manual and clipboard copy, interest actions, anchors and local assets. No email sent.');

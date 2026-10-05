@@ -4,6 +4,8 @@
 
 A little space for **calm, peace and love** in everyday life. Spiritual curiosity with both feet on the ground. Nature, meditation, reflection and small acts of kindness are invitations, not requirements.
 
+Frame this as remembering what is already within, rather than achieving a new self or completing a spiritual journey. Annie’s distinctive introduction is “aerospace by day, woo woo-ish by night.” She works in aerospace; do not imply she is an engineer, scientist, therapist or spiritual teacher. Curiosity about consciousness and spirituality should stay curious, not certain.
+
 ## Voice
 
 Warm, curious, playful and plain-spoken. Sound like an invitation from a thoughtful friend. Short sentences, specific moments and a little lightness. Welcome the whole range of feelings; no pressure to be positive or spiritually accomplished.
