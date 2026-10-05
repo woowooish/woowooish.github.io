@@ -63,7 +63,9 @@ Next priority: recheck provisioning and perform desktop/390px/768px browser QA w
 
 Completed an accessibility improvement for the reference design’s continuous motion. A visible, keyboard-accessible hero control now pauses and resumes the scrolling phrase marquee and rotating seal together. It uses an `aria-pressed` state and describes the next action. The page continues to obey `prefers-reduced-motion`: when a visitor requests reduced motion, the decorative animations stop automatically and the redundant button stays hidden. No essential content depends on animation.
 
-Validation before publication: JavaScript syntax and the full site interaction suite passed. New tests exercise the pause/play state, page animation class, live changes to the operating-system preference, control visibility and unique markup. Existing timer, forms, copy fallback, interest, internal anchor and asset checks still pass. Deployment and served-byte verification are the final checks for this pass.
+Validation: JavaScript syntax and the full site interaction suite passed. New tests exercise the pause/play state, page animation class, live changes to the operating-system preference, control visibility and unique markup. Existing timer, forms, copy fallback, interest, internal anchor and asset checks still pass.
+
+Published in commit `da6ad143ea0cd7948387eb1c126d4ce16bd387ef`. GitHub Pages run `37295225653` completed successfully. The deployed HTTP HTML (36,155 bytes), CSS (9,535 bytes) and site script (8,449 bytes) all returned 200 and matched the checked local files exactly. HTTPS still returned 502 after deployment, so browser visual interaction with the control remains unverified and is not claimed.
 
 Launch observation: the signed-in GitHub Pages UI still showed `CertificateRequested` (1 of 3), DNS check in progress and Enforce HTTPS unavailable. The setting was not changed and the custom domain was not reset. Browser visual QA remains pending HTTPS.
 
