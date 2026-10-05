@@ -6,7 +6,7 @@ The user authorized ongoing improvements and publishing to `woowooish.com` in `w
 
 Six scheduled passes start approximately 02:00 through 07:00 on October 5, 2026 in `America/Los_Angeles`. Each flexible run may occur within the following hour. This is a bounded set of scheduled passes, not continuous background execution. The automation ends after six occurrences.
 
-Scheduled passes completed: **0 / 6**. Increment this counter and add a dated entry after each pass. The sixth pass should provide the morning report. If runs overlap, preserve concurrent changes, use fast-forward updates, and never force-push. Read the current branch at the beginning of every pass; this document is the durable handoff, not the local scratch folder.
+Scheduled passes completed: **1 / 6**. Increment this counter and add a dated entry after each pass. The sixth pass should provide the morning report. If runs overlap, preserve concurrent changes, use fast-forward updates, and never force-push. Read the current branch at the beginning of every pass; this document is the durable handoff, not the local scratch folder.
 
 ## Priorities
 
@@ -47,4 +47,12 @@ Desktop/phone visual checking remains pending. A local HTML preview attempt was 
 
 ## Scheduled pass log
 
-No scheduled passes completed yet.
+### Pass 1 — October 5, 2026, approximately 02:05 PDT
+
+Completed a community/contact improvement: both forms now provide an expandable, copy-ready draft for visitors who use webmail or have no configured email app. Clipboard success, missing Clipboard API and denied permission are handled honestly; the fallback selects text for the visitor to copy. Editing a form or choosing another gathering idea clears the previous draft, and a delayed clipboard result cannot restore old status. No email is automatically sent and no new service is connected. The approved visual palette and layout are retained.
+
+Validation: JavaScript syntax and the expanded `scripts/check-site.cjs` passed. New checks cover both copy methods, denied clipboard permission, complete subject/recipient/body formatting, plain-text treatment of markup and Unicode, and invalidation during an outstanding asynchronous copy. Existing timer, contact, interest, anchor and asset checks still pass. Deployment and served-byte verification are the final checks for this pass.
+
+Launch observations: HTTP returned 200 at the beginning of the pass; HTTPS returned 502. The signed-in Pages UI still showed `CertificateRequested` (1 of 3), DNS check in progress, and Enforce HTTPS unavailable. Fresh Google DNS-over-HTTPS answers returned exactly the four GitHub Pages A records and `www` CNAME `woowooish.github.io`. The custom domain was not reset. Browser visual checks remain pending secure access.
+
+Next priority: recheck provisioning and perform desktop/390px/768px browser QA when HTTPS works. If it remains pending, look for a meaningful accessibility or content issue rather than gratuitously rewriting the existing reflections. A real newsletter provider and verified reel media remain unavailable decisions, not reasons to invent integrations.

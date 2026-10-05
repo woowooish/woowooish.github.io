@@ -1,15 +1,74 @@
 'use strict';
 
+const preparedDrafts = new Map();
+
 function emailDraft(subject, message) {
   return 'mailto:woowooish@gmail.com?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(message);
 }
 
 function prepareDraft(formId, subject, message) {
+  preparedDrafts.set(formId, {subject, message});
   const link = document.getElementById(formId + '-draft');
   link.href = emailDraft(subject, message);
   link.hidden = false;
-  document.getElementById(formId + '-status').textContent = 'Your draft is ready. Open it below and send it from your email app.';
+  const panel = document.getElementById(formId + '-copy');
+  const field = document.getElementById(formId + '-copy-text');
+  const button = document.getElementById(formId + '-copy-button');
+  if (panel && field && button) {
+    field.value = 'To: woowooish@gmail.com\nSubject: ' + subject + '\n\n' + message;
+    panel.hidden = false;
+    panel.open = false;
+    button.disabled = false;
+    button.textContent = canCopyDraft() ? 'Copy draft' : 'Select draft to copy';
+  }
+  document.getElementById(formId + '-status').textContent = 'Your draft is ready. Open it in your email app, or copy it below to send from your usual email service.';
   link.focus();
+}
+
+function canCopyDraft() {
+  return typeof navigator !== 'undefined' && navigator.clipboard && typeof navigator.clipboard.writeText === 'function';
+}
+
+function clearDraft(formId) {
+  preparedDrafts.delete(formId);
+  const link = document.getElementById(formId + '-draft');
+  link.hidden = true;
+  link.href = 'mailto:woowooish@gmail.com';
+  const panel = document.getElementById(formId + '-copy');
+  const field = document.getElementById(formId + '-copy-text');
+  if (panel) { panel.hidden = true; panel.open = false; }
+  if (field) field.value = '';
+  document.getElementById(formId + '-status').textContent = '';
+}
+
+async function copyDraft(formId) {
+  const draft = preparedDrafts.get(formId);
+  if (!draft) return;
+  const field = document.getElementById(formId + '-copy-text');
+  const button = document.getElementById(formId + '-copy-button');
+  const panel = document.getElementById(formId + '-copy');
+  const status = document.getElementById(formId + '-status');
+  button.disabled = true;
+  let copied = false;
+  if (canCopyDraft()) {
+    try {
+      await navigator.clipboard.writeText(field.value);
+      copied = true;
+    } catch (_) {
+      // Native selection remains available if clipboard access is unavailable.
+    }
+  }
+  if (preparedDrafts.get(formId) !== draft) return;
+  button.disabled = false;
+  if (copied) {
+    status.textContent = 'Draft copied. Paste it into a new email to woowooish@gmail.com, review it and send when you’re ready.';
+  } else {
+    panel.open = true;
+    field.focus();
+    field.select();
+    field.setSelectionRange(0, field.value.length);
+    status.textContent = 'Draft selected. Use your device’s Copy command, then paste it into a new email to woowooish@gmail.com. Review and send when you’re ready.';
+  }
 }
 
 const newsletter = document.getElementById('newsletter-form');
@@ -38,16 +97,17 @@ contact.addEventListener('submit', function (event) {
 
 for (const form of [newsletter, contact]) {
   form.addEventListener('input', function () {
-    document.getElementById(form.id + '-draft').hidden = true;
-    document.getElementById(form.id + '-status').textContent = '';
+    clearDraft(form.id);
   });
+  const copyButton = document.getElementById(form.id + '-copy-button');
+  if (copyButton) copyButton.addEventListener('click', () => copyDraft(form.id));
 }
 
 for (const link of document.querySelectorAll('[data-interest]')) {
   link.addEventListener('click', function () {
     const title = link.dataset.interest;
     contact.elements.message.value = 'Aloha Annie! I like the idea of ' + title.toLowerCase() + '. Please keep me in mind when you are planning a gathering and let me know if there are any updates. Thank you!';
-    document.getElementById('contact-form-draft').hidden = true;
+    clearDraft('contact-form');
     document.getElementById('contact-form-status').textContent = 'Tell Annie you’re interested below. There is no scheduled event or booking yet.';
     contact.elements.name.focus({ preventScroll: true });
   });

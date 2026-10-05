@@ -31,7 +31,7 @@ assert.equal(timer.snapshot().state, 'idle');
 const nodes = {};
 function node(id) {
   return nodes[id] ??= {id, hidden:true, href:'', textContent:'', disabled:true,
-    focus(){this.focused=true;}, classList:{toggle(){}},
+    focus(){this.focused=true;},select(){this.selected=true;},setSelectionRange(start,end){this.selection=[start,end];},classList:{toggle(){}},
     addEventListener(type, fn){this[type]=fn;}};
 }
 function form(id, values) {
@@ -47,6 +47,7 @@ let intervalFn = null;
 let intervalCount = 0;
 let uiNow = 0;
 const context = {
+  navigator:{},
   document:{getElementById:node, querySelectorAll(){return [interest];},addEventListener(){}},
   WoowooishPause:{createTimer:()=>createTimer(()=>uiNow)},
   setInterval(fn){intervalFn=fn;intervalCount++;return intervalCount;},
@@ -106,4 +107,48 @@ assert.equal((markup.match(/class="reflection-card"/g)||[]).length,4);
 assert.equal((markup.match(/data-interest=/g)||[]).length,3);
 assert(!/Save my spot|salt water heals|good vibes only|reel:/.test(markup),'do not restore misleading reference placeholders');
 assert.equal(fs.readFileSync(path.join(root,'CNAME'),'utf8').trim(),'woowooish.com');
-console.log('PASS: timer and UI transitions, throttled clock, email encoding, draft invalidation, interest actions, anchors and local assets. No email sent.');
+async function checkCopyFallbacks() {
+  newsletter.valid = true;
+  newsletter.submit(event);
+  const field = node('newsletter-form-copy-text');
+  const panel = node('newsletter-form-copy');
+  const button = node('newsletter-form-copy-button');
+  assert.match(field.value,/To: woowooish@gmail.com\nSubject: Join the Tide/);
+  assert.equal(panel.hidden,false);
+  assert.equal(button.textContent,'Select draft to copy');
+  await button.click();
+  assert.equal(field.selected,true,'manual selection works without Clipboard API');
+  assert.deepEqual(field.selection,[0,field.value.length]);
+  assert.match(node('newsletter-form-status').textContent,/Draft selected/);
+  let copiedText = '';
+  context.navigator.clipboard = {async writeText(value){copiedText=value;}};
+  newsletter.submit(event);
+  assert.equal(button.textContent,'Copy draft');
+  await button.click();
+  assert.equal(copiedText,field.value);
+  assert.match(node('newsletter-form-status').textContent,/Draft copied/);
+  context.navigator.clipboard.writeText = async () => {throw Error('NotAllowedError');};
+  await button.click();
+  assert.match(node('newsletter-form-status').textContent,/Draft selected/,'denied clipboard permission must use manual copy');
+  assert.equal(button.disabled,false);
+  let finishCopy;
+  context.navigator.clipboard.writeText = () => new Promise(resolve=>{finishCopy=resolve;});
+  const pendingCopy = button.click();
+  newsletter.input();
+  finishCopy(); await pendingCopy;
+  assert.equal(panel.hidden,true);
+  assert.equal(field.value,'');
+  assert.equal(node('newsletter-form-status').textContent,'','an old copy result must not restore stale status after editing');
+  contact.elements.name.value='A & B';
+  contact.elements.message.value='<script>alert("hello")</script>\nAloha 🌊';
+  contact.submit(event);
+  assert(node('contact-form-copy-text').value.includes('<script>alert("hello")</script>'),'draft content stays plain text');
+  interest.click();
+  assert.equal(node('contact-form-copy').hidden,true);
+  assert.equal(node('contact-form-copy-text').value,'');
+  assert.equal((markup.match(/class="draft-copy"/g)||[]).length,2);
+  assert.equal((markup.match(/\breadonly(?:="[^"]*")?[\s>]/g)||[]).length,2);
+}
+checkCopyFallbacks().then(()=>{
+  console.log('PASS: timer and UI transitions, email drafts, manual and clipboard copy, denied permission and stale async handling, interest actions, anchors and local assets. No email sent.');
+}).catch(error=>{console.error(error);process.exitCode=1;});
