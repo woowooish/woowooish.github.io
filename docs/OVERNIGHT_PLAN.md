@@ -6,7 +6,7 @@ The user authorized ongoing improvements and publishing to `woowooish.com` in `w
 
 Six scheduled passes start approximately 02:00 through 07:00 on October 5, 2026 in `America/Los_Angeles`. Each flexible run may occur within the following hour. This is a bounded set of scheduled passes, not continuous background execution. The automation ends after six occurrences.
 
-Scheduled passes completed: **3 / 6**. Increment this counter and add a dated entry after each pass. The sixth pass should provide the morning report. If runs overlap, preserve concurrent changes, use fast-forward updates, and never force-push. Read the current branch at the beginning of every pass; this document is the durable handoff, not the local scratch folder.
+Scheduled passes completed: **5 / 6**. Increment this counter and add a dated entry after each pass. The sixth pass should provide the morning report. If runs overlap, preserve concurrent changes, use fast-forward updates, and never force-push. Read the current branch at the beginning of every pass; this document is the durable handoff, not the local scratch folder.
 
 ## Priorities
 
@@ -84,3 +84,21 @@ Validation: both JavaScript syntax checks and `node scripts/check-site.cjs` pass
 Published the label work in commit `eb6ba270f40a0d0fb2d5eb869a6d8e9884271fba`; GitHub Pages run `37301648502` completed successfully. Published the browser-discovered contact fix in commit `8c143a399f4e7425f771816ef322535cabb3dc76`; GitHub Pages run `37302925514` completed successfully. The live contact draft then returned the expected status, encoded subject and copy fallback; the live newsletter and gathering-interest paths also passed.
 
 Next priority: treat HTTPS and responsive launch QA as complete unless a later check shows a regression; do not reset the domain. Use the remaining passes for one genuinely useful brand/content improvement or a verified public link, while avoiding speculative events, unverified reel URLs and unnecessary rewrites. Direct subscription still requires an existing user-owned provider; until then the honest email-draft interest flow should remain.
+
+### Pass 4 — October 5, 2026, approximately 05:05 PDT
+
+Added a useful, non-timed “both-and” practice beneath the three-minute pause for moments when a lot is present. It makes clear that calm is not a demand to feel calm, then offers three small steps: name what is here, allow another truth alongside it, and choose one supportive next action. The language welcomes mixed feelings without promising a health outcome, requiring signup or presenting Annie as a spiritual authority. The approved navy/aqua palette, portraits and playful type remain unchanged.
+
+Validation: both JavaScript syntax checks and `node scripts/check-site.cjs` passed. New structural checks require exactly one practice and exactly three steps. The deployed practice was inspected over HTTPS at desktop width and, at the beginning of the following pass, in the live 390px and 768px frames. Its semantic heading and list remain readable; phone cards stack without overflow, while the tablet layout retains a balanced two-column treatment.
+
+Published in commit `254803bebed4beb053a84885cf4c0d01bd89d408`. GitHub Pages run `37308067754` completed successfully.
+
+### Pass 5 — October 5, 2026, approximately 06:20 PDT
+
+Refined the Annie section into a warmer first-person expression of the brand: Woowooish is now described as a practice Annie keeps returning to—meeting ordinary life with a little more calm, peace and love—followed by the existing invitation to bring questions and a full range of feelings. The copy explicitly avoids pretending to have everything figured out. No private history, qualifications, testimonials or outcome claims were added.
+
+Validation: both JavaScript syntax checks and the complete site suite passed, including a new assertion for the first-person brand purpose. GitHub Pages deployed the exact head successfully. The live HTTPS accessibility tree exposed the new paragraph, original portrait and surrounding content correctly. Desktop visual QA showed the copy fitting its existing card cleanly. The refreshed 390px and 768px frames both contained the new text; measured paragraph widths matched their client widths and each document’s scroll width matched its viewport, confirming no horizontal overflow. Phone visual inspection confirmed the longer copy flows naturally into the existing interest pills and portrait.
+
+Published in commit `e9c1740a747724301c2272d9ae98d52d2fe83aba`. GitHub Pages run `37317056862` completed successfully.
+
+Next priority: make the sixth pass a restrained final regression pass and morning report rather than another speculative rewrite. Re-read the current head, run the full local checks, confirm HTTPS and the latest Pages deployment, and spot-check the live navigation, practices, reflections and honest email-draft actions. Report live and GitHub links, remaining user-owned decisions (newsletter provider and verified Instagram post URLs), a short pros/cons table and calibrated confidence. Do not reset the domain or create an integration merely to fill the final pass.
