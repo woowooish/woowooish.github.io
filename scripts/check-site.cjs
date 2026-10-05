@@ -37,7 +37,8 @@ function node(id) {
 }
 function form(id, values) {
   const result = node(id);
-  result.elements = Object.fromEntries(Object.entries(values).map(([key,value])=>[key,{value,focus(){}}]));
+  const controls = Object.fromEntries(Object.entries(values).map(([key,value])=>[key,{value,focus(){}}]));
+  result.elements = {namedItem(name){return controls[name] ?? null;}};
   result.reportValidity = function(){return this.valid !== false;};
   return result;
 }
@@ -88,10 +89,10 @@ draft = new URL(node('contact-form-draft').href);
 assert.equal(draft.searchParams.get('subject'),'Aloha from A & B');
 assert(draft.searchParams.get('body').includes('Aloha & good vibes 🌊'));
 interest.click();
-assert(contact.elements.message.value.includes('a walk by the water'));
+assert(contact.elements.namedItem('message').value.includes('a walk by the water'));
 assert.match(node('contact-form-status').textContent,/no scheduled event or booking/);
 assert.equal(node('contact-form-draft').hidden,true);
-contact.elements.name.value='   '; contact.submit(event);
+contact.elements.namedItem('name').value='   '; contact.submit(event);
 assert.match(node('contact-form-status').textContent,/Please include your name/);
 newsletter.valid=false; newsletter.submit(event);
 assert.equal(node('newsletter-form-draft').hidden,true);
@@ -164,8 +165,8 @@ async function checkCopyFallbacks() {
   assert.equal(panel.hidden,true);
   assert.equal(field.value,'');
   assert.equal(node('newsletter-form-status').textContent,'','an old copy result must not restore stale status after editing');
-  contact.elements.name.value='A & B';
-  contact.elements.message.value='<script>alert("hello")</script>\nAloha 🌊';
+  contact.elements.namedItem('name').value='A & B';
+  contact.elements.namedItem('message').value='<script>alert("hello")</script>\nAloha 🌊';
   contact.submit(event);
   assert(node('contact-form-copy-text').value.includes('<script>alert("hello")</script>'),'draft content stays plain text');
   interest.click();

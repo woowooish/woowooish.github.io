@@ -75,7 +75,7 @@ const newsletter = document.getElementById('newsletter-form');
 newsletter.addEventListener('submit', function (event) {
   event.preventDefault();
   if (!newsletter.reportValidity()) return;
-  const email = newsletter.elements.email.value.trim();
+  const email = newsletter.elements.namedItem('email').value.trim();
   prepareDraft('newsletter-form', 'Join the Tide — interest list request',
     'Aloha Annie!\n\nI would love to hear about Woowooish reflections, practices and future gatherings. Please let me know when the Tide newsletter is ready and how to subscribe. My email address is: ' + email + '\n\nThank you!');
 });
@@ -84,9 +84,9 @@ const contact = document.getElementById('contact-form');
 contact.addEventListener('submit', function (event) {
   event.preventDefault();
   if (!contact.reportValidity()) return;
-  const name = contact.elements.name.value.trim();
-  const email = contact.elements.email.value.trim();
-  const message = contact.elements.message.value.trim();
+  const name = contact.elements.namedItem('name').value.trim();
+  const email = contact.elements.namedItem('email').value.trim();
+  const message = contact.elements.namedItem('message').value.trim();
   if (!name || !message) {
     document.getElementById('contact-form-status').textContent = 'Please include your name and a message.';
     return;
@@ -106,10 +106,10 @@ for (const form of [newsletter, contact]) {
 for (const link of document.querySelectorAll('[data-interest]')) {
   link.addEventListener('click', function () {
     const title = link.dataset.interest;
-    contact.elements.message.value = 'Aloha Annie! I like the idea of ' + title.toLowerCase() + '. Please keep me in mind when you are planning a gathering and let me know if there are any updates. Thank you!';
+    contact.elements.namedItem('message').value = 'Aloha Annie! I like the idea of ' + title.toLowerCase() + '. Please keep me in mind when you are planning a gathering and let me know if there are any updates. Thank you!';
     clearDraft('contact-form');
     document.getElementById('contact-form-status').textContent = 'Tell Annie you’re interested below. There is no scheduled event or booking yet.';
-    contact.elements.name.focus({ preventScroll: true });
+    contact.elements.namedItem('name').focus({ preventScroll: true });
   });
 }
 
