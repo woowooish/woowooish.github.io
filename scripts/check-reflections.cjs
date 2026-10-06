@@ -59,8 +59,8 @@ function setup(hash = '#reflection-wonder', clipboard) {
   const markup=fs.readFileSync(path.join(root,'index.html'),'utf8');
   assert.equal((markup.match(/class="start-path"/g)||[]).length,3);
   assert.equal((markup.match(/class="featured-note"/g)||[]).length,1);
-  assert.equal((markup.match(/data-copy-note="question"/g)||[]).length,5);
-  assert.equal((markup.match(/data-copy-note="link"/g)||[]).length,5);
+  assert.equal((markup.match(/data-copy-note="question"/g)||[]).length,19);
+  assert.equal((markup.match(/data-copy-note="link"/g)||[]).length,19);
   assert.match(markup,/remembering what’s already within/);
   assert.match(markup,/aerospace by day/);
   assert.match(markup,/Life doesn’t have to be perfect/);

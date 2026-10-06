@@ -2,7 +2,7 @@
 
 // Reflections stay readable without this optional copy and deep-link enhancement.
 (() => {
-  const notes = [...document.querySelectorAll('.reflection-card, .featured-note')];
+  const notes = [...document.querySelectorAll('.reflection-card, .featured-note, .dose-note')];
   if (!notes.length) return;
 
   function openLinkedReflection() {
