@@ -14,10 +14,11 @@ The site uses plain HTML, CSS and JavaScript. No build system, dependency instal
 - `assets/daily.js`: selects a daily reminder using the visitor’s local calendar date, and opens direct links into the reminder archive.
 - `assets/fonts.css` and `assets/fonts/`: fonts from the reference, hosted locally.
 - `assets/annie-beach.webp` and `assets/annie-avatar.webp`: original portrait assets from the reference, optimized for the web.
+- `assets/annie-beach-walk.webp`, `assets/annie-sailing.webp` and `assets/annie-mountain-walk.webp`: Annie’s approved personal photos, resized to 900 × 1200 WebP with embedded metadata removed. The hero stays unchanged; the About photo is bounded at 360px wide without zoom.
 - `preview.html`: noindex phone (390px) and tablet (768px) frames for visual checking; check the main page separately on desktop.
 - `docs/BRAND_GUIDE.md`: voice, visual language and factual content rules.
 - `docs/OVERNIGHT_PLAN.md`: bounded overnight priorities, verification and progress.
-- `scripts/check-site.cjs`, `scripts/check-reflections.cjs` and `scripts/check-daily.cjs`: interaction, structural and daily calendar checks; run all three with Node.
+- `scripts/check-site.cjs`, `scripts/check-reflections.cjs`, `scripts/check-daily.cjs` and `scripts/check-photos.cjs`: interaction, structural, daily calendar and photo checks; run all four with Node.
 
 ## Current form behavior
 
