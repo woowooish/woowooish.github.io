@@ -14,7 +14,7 @@ The site uses plain HTML, CSS and JavaScript. No build system, dependency instal
 - `assets/daily.js`: selects a daily reminder using the visitor’s local calendar date, and opens direct links into the reminder archive.
 - `assets/fonts.css` and `assets/fonts/`: fonts from the reference, hosted locally.
 - `assets/annie-beach.webp` and `assets/annie-avatar.webp`: original portrait assets from the reference, optimized for the web.
-- `assets/annie-beach-walk.webp`, `assets/annie-sailing.webp` and `assets/annie-mountain-walk.webp`: Annie’s approved personal photos, resized to 900 × 1200 WebP with embedded metadata removed. The hero stays unchanged; the About photo is bounded at 360px wide without zoom.
+- `assets/annie-beach-walk-clean.webp`, `assets/annie-sailing.webp` and `assets/annie-mountain-walk.webp`: Annie’s approved personal photos, resized to 900 × 1200 WebP with embedded metadata removed. The About image includes an AI-assisted flyaway-hair cleanup; the original remains in `assets/annie-beach-walk.webp`. Desktop About cards have equal widths and matching heights; below 960px they stack and the photo uses its natural 3:4 aspect ratio. The hero stays unchanged.
 - `preview.html`: noindex phone (390px) and tablet (768px) frames for visual checking; check the main page separately on desktop.
 - `docs/BRAND_GUIDE.md`: voice, visual language and factual content rules.
 - `docs/OVERNIGHT_PLAN.md`: bounded overnight priorities, verification and progress.

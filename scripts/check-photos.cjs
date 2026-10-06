@@ -5,7 +5,7 @@ const root = path.join(__dirname, '..');
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const css = fs.readFileSync(path.join(root, 'assets/site.css'), 'utf8');
 let total = 0;
-for (const name of ['annie-beach-walk', 'annie-sailing', 'annie-mountain-walk']) {
+for (const name of ['annie-beach-walk-clean', 'annie-sailing', 'annie-mountain-walk']) {
   const file = `assets/${name}.webp`;
   const bytes = fs.readFileSync(path.join(root, file));
   total += bytes.length;
@@ -26,6 +26,9 @@ assert(total < 600000, 'Added photos exceed 600kB');
 assert(html.includes('assets/annie-beach.webp'), 'Keep the approved hero portrait');
 assert(html.includes('not a scheduled gathering'), 'Do not imply sailing is a scheduled event');
 assert(!html.includes('transform: scale(1.5)'), 'Remove the enlarged About crop');
-assert.match(css, /\.about-photo \{[^}]*max-width:360px;[^}]*aspect-ratio:3\/4;/);
+assert.match(css, /\.about-layout \{[^}]*grid-template-columns:repeat\(2,minmax\(0,1fr\)\);[^}]*align-items:stretch;/);
+assert.match(css, /\.about-photo img \{[^}]*position:absolute;[^}]*object-fit:cover;/);
+assert.match(css, /@media\(max-width:960px\) \{\s*\.about-layout \{grid-template-columns:1fr;\}\s*\.about-photo \{aspect-ratio:3\/4;\}/);
+assert(!css.includes('max-width:360px'), 'About photo should fill its equal-size desktop card');
 assert(!css.includes('.about-photo {min-height:380px'));
-console.log(`Photo checks passed: three lazy-loaded, metadata-free WebP images (${total} bytes); bounded About portrait and unchanged hero.`);
+console.log(`Photo checks passed: three lazy-loaded, metadata-free WebP images (${total} bytes); equal-size desktop About cards, responsive portrait and unchanged hero.`);
