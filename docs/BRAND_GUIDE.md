@@ -20,6 +20,8 @@ Preserve the approved reference: deep navy, aqua and ocean blue; Bricolage Grote
 
 Use readable text, visible keyboard focus, comfortable tap targets, responsive layouts and reduced-motion support. The pause should never autoplay, force a breathing pattern or require sound. Reflections should use native accessible disclosures.
 
+Sharing previews must use the portrait-free WooWooish card (`assets/woowooish-share-20261006.png`) and brand icons. Do not use Annie’s face or personal portraits in Open Graph, Twitter card or mobile preview metadata. Keep the approved preview title “WooWooish” and description “A little reminder of what’s already within. 🤍”.
+
 ## Facts and privacy
 
 Only publish confirmed dates, places, prices, reel links, testimonials, qualifications and other factual claims. Gathering ideas are explicitly interest options until a schedule is supplied. The newsletter is an interest request until an actual subscription service is connected. Do not claim a message was sent or a place booked when the site only prepared an email draft.
