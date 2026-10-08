@@ -1,6 +1,6 @@
 'use strict';
 const vm=require('node:vm'),fs=require('node:fs'),assert=require('node:assert/strict');
-const code=fs.readFileSync(require('node:path').join(__dirname,'../assets/site-privacy.js'),'utf8');
+const code=fs.readFileSync(process.env.WOO_PRIVACY_SOURCE || require('node:path').join(__dirname,'../assets/site-privacy.js'),'utf8');
 let checks=0;
 function boot({host='woowooish.com',dnt='0',gpc=false,optOut=false,denied=false,embedded=false}={}){
  const scripts=[],nodes={},listeners={};const stored=new Map(optOut?[['woowooish.analytics.optout.v1','1']]:[]);
@@ -23,4 +23,33 @@ c.nodes['analytics-off'].click();assert.equal(c.hook('event',{}),false);assert.e
 c.nodes['analytics-on'].click();assert.equal(c.scripts.length,1);assert(c.hook('event',{}));checks++;
 const denied=boot({denied:true});denied.nodes['analytics-off'].click();assert.equal(denied.hook('event',{}),false);assert.match(denied.nodes['analytics-preference'].textContent,/cannot save/);checks++;
 c.stored.set('woowooish.analytics.optout.v1','1');c.listeners.storage({key:'woowooish.analytics.optout.v1'});assert.equal(c.hook('event',{}),false);checks++;
-console.log(JSON.stringify({status:'PASS',checks}));
+// Regressions from the second audit: fail closed, limit path/field disclosure,
+// and refresh choices when a tab returns from the back-forward cache.
+const unreadable=boot({denied:true});
+assert.equal(unreadable.scripts.length,0,'unreadable opt-out must never load the tracker');
+assert.equal(unreadable.hook('event',{}),false);checks++;
+unreadable.nodes['analytics-on'].click();
+assert.equal(unreadable.scripts.length,1,'explicit opt-in may apply to this open page');checks++;
+const publicPage=boot();
+assert.equal(publicPage.scripts[0].attrs['data-host-url'],'https://gateway.umami.is');checks++;
+publicPage.context.location.pathname='/unknown/private-address';
+assert.equal(publicPage.hook('event',{}),false,'unknown URL paths must not enter analytics');checks++;
+for (const route of ['/preview.html','/404.html']) {publicPage.context.location.pathname=route;assert.equal(publicPage.hook('event',{}),false);checks++;}
+publicPage.context.location.pathname='/index.html';
+assert.equal(publicPage.hook('event',{}).url,'/');checks++;
+publicPage.context.location.pathname='/the-art-of-noticing/index.html';
+assert.equal(publicPage.hook('event',{}).url,'/the-art-of-noticing/');checks++;
+publicPage.context.document.title='PRIVATE EDITED TITLE';
+const safe=publicPage.hook('event',{screen:{note:'private'},language:{note:'private'},data:{note:'private'}});
+assert.equal(safe.title,'Pick Your Woo | WooWooish');assert.equal(safe.screen,undefined);assert.equal(safe.language,undefined);checks++;
+assert.equal(publicPage.hook('event',[]),false);assert.equal(publicPage.hook('identify',{}),false);checks++;
+for(const value of ['', 'not-json', 'false']){
+ const tab=boot();tab.stored.set('woowooish.analytics.optout.v1',value);
+ tab.listeners.storage({key:'woowooish.analytics.optout.v1'});
+ assert.equal(tab.hook('event',{}),false);assert.match(tab.nodes['analytics-preference'].textContent,/could not be read/);checks++;
+}
+const restored=boot();restored.stored.set('woowooish.analytics.optout.v1','1');
+restored.listeners.pageshow({persisted:true});assert.equal(restored.hook('event',{}),false);checks++;
+const otherTab=boot({optOut:true});otherTab.stored.delete('woowooish.analytics.optout.v1');
+otherTab.listeners.storage({key:'woowooish.analytics.optout.v1'});assert.equal(otherTab.scripts.length,1);checks++;
+console.log(JSON.stringify({status:'PASS',checks,includesSecondAudit:true}));

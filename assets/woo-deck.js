@@ -30,6 +30,8 @@
     const fallback = options.random || Math.random;
     const locks = Object.prototype.hasOwnProperty.call(options, 'locks') ? options.locks : (root.navigator && root.navigator.locks);
     const storage = options.storage || (() => root.localStorage);
+    const atomic = !Object.prototype.hasOwnProperty.call(options, 'storage') && root.WooAtomic && root.WooAtomic.supported
+      ? root.WooAtomic.create(KEY) : null;
     let memory = null;
     let persistent = true;
     let queue = Promise.resolve();
@@ -49,12 +51,12 @@
         last: ids.has(saved.last) ? saved.last : null,
         cycles: Number.isSafeInteger(saved.cycles) && saved.cycles >= 0 ? saved.cycles : 0};
     }
-    function drawNow() {
+    function drawNow(transactionStorage) {
       recovered = false;
       const day = localDay(now());
       let state;
       if (persistent) {
-        try { state = normalize(storage().getItem(KEY), day); }
+        try { state = normalize((transactionStorage || storage()).getItem(KEY), day); }
         catch (_) { persistent = false; state = normalize(memory, day); }
       } else state = normalize(memory, day);
       const today = new Set(state.today);
@@ -62,7 +64,7 @@
       // A finite collection cannot offer more than its size in one local day.
       if (today.size === entries.length) {
         memory = state;
-        return {entry: null, exhausted: true, persistent, coordinated: Boolean(locks && locks.request), recovered, total: entries.length};
+        return {entry: null, exhausted: true, persistent, coordinated: Boolean(atomic && transactionStorage), recovered, total: entries.length};
       }
       let candidates = entries.filter(entry => !seen.has(entry.id) && !today.has(entry.id));
       let restarted = false;
@@ -81,15 +83,21 @@
       memory = state;
       // Reserve before showing the Woo, so another tab reads the updated history.
       if (persistent) {
-        try { storage().setItem(KEY, JSON.stringify(state)); }
+        try { (transactionStorage || storage()).setItem(KEY, JSON.stringify(state)); }
         catch (_) { persistent = false; }
       }
-      return {entry, exhausted: false, persistent, coordinated: Boolean(locks && locks.request), recovered, restarted,
+      return {entry, exhausted: false, persistent, coordinated: Boolean(atomic && transactionStorage), recovered, restarted,
         total: entries.length, seen: state.seen.length, today: state.today.length};
     }
     function next() {
       const task = queue.then(() => {
-        if (locks && typeof locks.request === 'function') return locks.request(LOCK, drawNow);
+        if (atomic) return atomic.run(raw => {
+          let nextRaw = raw;
+          const value = drawNow({getItem: () => raw, setItem: (_, encoded) => {nextRaw = encoded;}});
+          value.persistent = true; value.coordinated = true;
+          return {raw: nextRaw, value};
+        }).then(result => result.value);
+        if (locks && typeof locks.request === 'function') return locks.request(LOCK, () => drawNow());
         return drawNow();
       });
       queue = task.catch(() => {});

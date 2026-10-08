@@ -54,6 +54,22 @@ with sync_playwright() as p:
         check(file+': keyboard skip link works',page.locator('.skip-link').count()==1)
         if file in ['privacy.html','gratitude-jar.html']:
             page.set_viewport_size({'width':390,'height':844});page.screenshot(path=str(OUT/(Path(file).stem+'-mobile.png')),full_page=True)
+    # Empty corrupt storage and draft-preserving recovery exports.
+    page=ctx.new_page()
+    page.set_content(render('gratitude-jar.html'))
+    page.evaluate("window.__saved.set(WooGratitude.key,'')")
+    page.set_content(render('gratitude-jar.html'))
+    check('Empty corrupt storage keeps recovery export enabled',page.locator('#jar-export').is_enabled())
+    with page.expect_download() as got:page.locator('#jar-export').click()
+    got.value.save_as(str(OUT/'empty-recovery.txt'))
+    check('Empty corrupt recovery is an exact empty file',(OUT/'empty-recovery.txt').read_bytes()==b'')
+    page.locator('#thought').fill('SYNTHETIC draft to recover')
+    with page.expect_download() as got:page.locator('#jar-export').click()
+    got.value.save_as(str(OUT/'draft-recovery.json'))
+    recovery=json.loads((OUT/'draft-recovery.json').read_text())
+    check('Recovery preserves original empty data and unsaved draft',recovery['originalStorage']=='' and recovery['unsavedDraft']=='SYNTHETIC draft to recover')
+    check('Recovery does not overwrite the original saved bytes',page.evaluate("window.__saved.get(WooGratitude.key)===''"))
+
     # A new browsing context document avoids redeclaring the homepage's top-level bindings.
     page=ctx.new_page();page.on('pageerror',lambda err:errors.append(str(err)))
     # Real homepage DOM, synthetic inputs, no mail sent.
@@ -140,6 +156,17 @@ with sync_playwright() as p:
     raw=BeautifulSoup((ROOT/'index.html').read_text(),'html.parser');meta=str(raw.select_one('meta[http-equiv="Content-Security-Policy"]'))
     probe=ctx.new_page();probe.set_content('<!doctype html><html><head>'+meta+'</head><body><script>window.__unapproved=true</script><h1>CSP probe</h1></body></html>')
     check('CSP blocks unapproved inline script in Chromium',not probe.evaluate('Boolean(window.__unapproved)'))
+    # Keep the real meta CSP intact for this collection-origin regression probe.
+    def collection_response(route):
+        route.fulfill(status=200,headers={'Access-Control-Allow-Origin':'*','Content-Type':'application/json'},body='{"ok":true}')
+    ctx.route('https://gateway.umami.is/**',collection_response)
+    allowed=probe.evaluate("fetch('https://gateway.umami.is/api/send',{method:'POST',body:'SYNTHETIC'}).then(r=>r.ok).catch(()=>false)")
+    check('Production CSP permits the current analytics gateway',allowed)
+    probe.evaluate("window.__connectBlocked=false;document.addEventListener('securitypolicyviolation',e=>{if(e.effectiveDirective==='connect-src')window.__connectBlocked=true})")
+    probe.evaluate("fetch('https://example.invalid/blocked').catch(()=>false)")
+    probe.wait_for_function('window.__connectBlocked')
+    check('Production CSP still blocks unapproved connections',True)
+
     b.close()
 report={'status':'PASS','checks_passed':len(checks),'checks':checks,'limitations':['Offline inlined production assets, simulated storage and locks. Not a live-origin or native multi-tab integration test.','Production CSP removed only in feature fixtures; isolated inline-script enforcement tested separately.','Analytics payload filtering tested against mocked platform boundary in check-privacy.cjs; private Umami dashboard not inspected.']}
 (OUT/'quality-browser-results.json').write_text(json.dumps(report,indent=2)+'\n')
