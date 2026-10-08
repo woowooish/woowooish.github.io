@@ -67,7 +67,10 @@ def main():
                     fetch('/release-verification-missing-' + release + '.html', release)
                 except urllib.error.HTTPError as error:
                     try:
-                        missing_route = error.code == 404 and b'WooWooish' in error.read(1024 * 1024)
+                        # A branded prefix alone is not proof of a complete response.
+                        # Exact bytes also detect truncated bounded reads, even when
+                        # HTTPResponse.read(size) returns short data without raising.
+                        missing_route = error.code == 404 and error.read(1024 * 1024) == (ROOT / '404.html').read_bytes()
                     finally:
                         error.close()
                 if not missing_route:
