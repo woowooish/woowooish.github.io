@@ -5,7 +5,7 @@ Screenshots and test output go to a temporary directory, not the repository.
 """
 from pathlib import Path
 from bs4 import BeautifulSoup
-import re, json, tempfile, shutil, hashlib, os
+import re, json, tempfile, shutil, hashlib, os, base64, mimetypes
 from playwright.sync_api import sync_playwright
 ROOT=Path(__file__).resolve().parents[1]
 OUT=Path(tempfile.mkdtemp(prefix='woowooish-noticing-check-'))
@@ -31,9 +31,22 @@ check('Sharing image is approved portrait-free card',soup.select_one('meta[prope
 check('No external scripts, forms, embeds or trackers',not soup.select('form,iframe') and all(e['src'].startswith('/assets/') for e in soup.select('script[src]')))
 check('No network or persistent-storage APIs in enhancement',not re.search(r'\b(fetch|XMLHttpRequest|localStorage|sessionStorage|indexedDB|sendBeacon)\b|document\.cookie',js))
 check('No fabricated Annie byline', not soup.select('[rel=author]') and 'not a personal account from Annie' in html)
-test_html = html.replace('<link rel="stylesheet" href="/assets/fonts.css">', '')
-test_html = test_html.replace('<link rel="stylesheet" href="/assets/noticing.css?v=20261007-1">', '<style>'+css+'</style>')
-test_html = test_html.replace('<script src="/assets/noticing.js?v=20261007-1" defer></script>', '')
+# Render exact production assets offline, including the approved fonts and portrait.
+def data_url(path):
+    media_type = mimetypes.guess_type(path.name)[0] or 'application/octet-stream'
+    return 'data:' + media_type + ';base64,' + base64.b64encode(path.read_bytes()).decode()
+def inline_styles(match):
+    path = ROOT / match[1].split('?')[0].lstrip('/')
+    style = path.read_text(encoding='utf-8')
+    def font_url(match):
+        value = match[1].strip('"' + "'")
+        if value.startswith(('data:', 'http:','https:')): return match[0]
+        return 'url("' + data_url((path.parent / value).resolve()) + '")'
+    style = re.sub(r'url\(([^)]+)\)', font_url, style)
+    return '<style>' + style + '</style>'
+test_html = re.sub(r'<link rel="stylesheet" href="([^"]+)">', inline_styles, html)
+test_html = re.sub(r'(<img[^>]+src=")([^"]+)(")', lambda m: m[1]+data_url(ROOT / m[2].lstrip('/'))+m[3], test_html)
+test_html = re.sub(r'<script src="/assets/noticing\.js(?:\?[^"]*)?" defer></script>', '', test_html)
 test_html = test_html.replace('</body>', '<script>'+js+'</script></body>')
 with sync_playwright() as p:
     executable=os.environ.get('CHROMIUM_EXECUTABLE') or shutil.which('chromium')
@@ -43,14 +56,17 @@ with sync_playwright() as p:
     errors=[]
     page.on('pageerror', lambda e:errors.append(str(e)))
     page.set_content(test_html)
+    page.evaluate('document.fonts.ready')
+    check('Original portrait loads', page.locator('.portrait img').evaluate('(e)=>e.complete && e.naturalWidth===1254'))
+    check('Brand fonts loaded', page.evaluate("document.fonts.check('800 20px Bricolage Grotesque') && document.fonts.check('400 12px Space Mono')"))
     check('Enhancement controls exposed',page.locator('#notebook-actions').is_visible())
     for width in [320,360,390,768,1024,1440]:
         page.set_viewport_size({'width':width,'height':900})
         check(f'No horizontal overflow at {width}px',page.evaluate('document.documentElement.scrollWidth<=innerWidth'))
     page.set_viewport_size({'width':1440,'height':1000})
-    page.screenshot(path=str(OUT/'desktop-fallback-fonts.png'),full_page=True)
+    page.screenshot(path=str(OUT/'desktop-production-assets.png'),full_page=True)
     page.set_viewport_size({'width':390,'height':844})
-    page.screenshot(path=str(OUT/'mobile-fallback-fonts.png'),full_page=True)
+    page.screenshot(path=str(OUT/'mobile-production-assets.png'),full_page=True)
     titles=set()
     for setting in ['home','outside','company']:
         page.locator(f'[data-setting={setting}]').click()
@@ -84,6 +100,7 @@ with sync_playwright() as p:
     page.evaluate("Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:()=>new Promise(r=>{window.finishCopy=r})}})")
     page.locator('#copy-note').click()
     page.locator('#clear-note').click()
+    page.locator('#confirm-clear').click()
     page.evaluate('window.finishCopy()')
     check('Late clipboard result cannot restore cleared status','Fields cleared' in page.locator('#note-status').inner_text())
     check('Clear erases fields and fallback',all(not page.locator('#'+i).input_value() for i in ['observed','felt','wondering','copy-text']))
@@ -95,6 +112,72 @@ with sync_playwright() as p:
     page.evaluate("Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async()=>{throw new Error('denied')}}})")
     page.locator('#share-guide').click()
     check('Share fallback works',page.locator('#share-fallback').is_visible())
+    # Connected prompts and deliberately confirmed clearing.
+    check('Quick-start has three source steps', len(soup.select('.small-start-steps li')) == 3)
+    check('Five stable field-note links', len(soup.select('.field-notes > details[id]')) == 5)
+    page.locator('#observed').fill('My own words, not a suggested answer.')
+    page.locator('#felt').fill('Both grateful and tired.')
+    page.locator('[data-setting=outside]').click()
+    question = page.locator('#invitation-question').inner_text()
+    page.locator('#carry-invitation').click()
+    check('Invitation question carried to notebook', page.locator('#carried-question-text').inner_text()==question)
+    check('Carrying a prompt preserves writing', page.locator('#observed').input_value()=='My own words, not a suggested answer.')
+    check('Carrying moves keyboard focus to writing', page.locator('#observed').evaluate('(e)=>e===document.activeElement'))
+    page.evaluate("Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async t=>{window.copiedText=t}}})")
+    page.locator('#copy-note').click()
+    check('Copy includes carried question', question in page.evaluate('window.copiedText'))
+    with page.expect_download() as got_with_prompt:
+        page.locator('#save-note').click()
+    got_with_prompt.value.save_as(str(OUT/'prompt-download-test.txt'))
+    check('Download includes carried question', question in (OUT/'prompt-download-test.txt').read_text(encoding='utf-8'))
+    page.locator('#clear-note').click()
+    check('Clear asks before removing writing', page.locator('#clear-confirm').is_visible() and bool(page.locator('#observed').input_value()))
+    check('Confirmation focuses safe keep-writing action', page.locator('#cancel-clear').evaluate('(e)=>e===document.activeElement'))
+    page.keyboard.press('Escape')
+    check('Escape dismisses confirmation without clearing', not page.locator('#clear-confirm').is_visible() and bool(page.locator('#observed').input_value()))
+    page.locator('#clear-note').click()
+    page.locator('#cancel-clear').click()
+    check('Keep writing preserves carried question', page.locator('#carried-question-text').inner_text()==question)
+    page.locator('#clear-note').click()
+    page.locator('#felt').fill('Changed after the confirmation appeared.')
+    check('Editing invalidates pending clear confirmation', not page.locator('#clear-confirm').is_visible())
+    page.evaluate("document.getElementById('confirm-clear').click()")
+    check('Stale clear action cannot erase new writing', page.locator('#felt').input_value()=='Changed after the confirmation appeared.')
+    page.locator('#remove-prompt').click()
+    check('Removing question preserves note', not page.locator('#carried-prompt').is_visible() and bool(page.locator('#observed').input_value()))
+    page.locator('#copy-note').click()
+    check('Removed question is excluded from copies', 'A QUESTION TO KEEP ME COMPANY' not in page.evaluate('window.copiedText'))
+    page.evaluate("window.location.hash='#note-open-question'")
+    page.wait_for_function("document.getElementById('note-open-question').open")
+    check('Direct field-note link opens correct disclosure', page.locator('#note-open-question').get_attribute('open') is not None)
+    check('Direct link moves keyboard focus to summary', page.locator('#note-open-question>summary').evaluate('(e)=>e===document.activeElement'))
+    page.locator('#note-open-question [data-reflect-note]').click()
+    check('Field-note question carries without label prefix', page.locator('#carried-question-text').inner_text()=='Which question would I like to keep company with, rather than solve today?')
+    page.locator('#share-guide').click()
+    check('Sharing excludes both note and carried prompt', page.evaluate("window.copiedText==='https://woowooish.com/the-art-of-noticing/'"))
+    page.locator('#clear-note').click()
+    page.locator('#confirm-clear').click()
+    check('Confirmed clear erases writing and question', all(not page.locator('#'+i).input_value() for i in ['observed','felt','wondering','copy-text']) and not page.locator('#carried-prompt').is_visible() and not page.locator('#carried-question-text').inner_text())
+    # Every field-note prompt should be carried as text, not HTML.
+    for note_id in ['note-beginners-eyes','note-two-feelings','note-curiosity','note-kindness','note-open-question']:
+        page.evaluate('(id)=>document.getElementById(id).open=true',note_id)
+        page.locator('#'+note_id+' [data-reflect-note]').click()
+        check(note_id+' question is usable', len(page.locator('#carried-question-text').inner_text()) > 20)
+    initial=context.new_page()
+    initial.goto('about:blank#note-curiosity')
+    initial.set_content(test_html)
+    check('Fresh page visit opens linked note',initial.locator('#note-curiosity').get_attribute('open') is not None)
+    initial.close()
+    page.locator('#observed').fill('Keep my writing while I change prompts.')
+    page.evaluate("Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:()=>new Promise(r=>{window.finishPromptCopy=r})}})")
+    page.locator('#copy-note').click()
+    page.locator('#note-kindness [data-reflect-note]').click()
+    page.evaluate('window.finishPromptCopy()')
+    check('Changing prompt invalidates late clipboard status','Question added' in page.locator('#note-status').inner_text())
+    for width in [320,390,768,1440]:
+        page.set_viewport_size({'width':width,'height':900})
+        check(f'Expanded notes and carried prompt fit at {width}px',page.evaluate('document.documentElement.scrollWidth<=innerWidth'))
+    check('No persistent note storage created', not re.search(r'\b(localStorage|sessionStorage|indexedDB|sendBeacon|XMLHttpRequest|fetch)\b',js))
     check('No JavaScript runtime errors',not errors)
     page.emulate_media(reduced_motion='reduce')
     check('Reduced motion removes smooth scrolling',page.evaluate("getComputedStyle(document.documentElement).scrollBehavior==='auto'"))
@@ -102,6 +185,8 @@ with sync_playwright() as p:
     nojs=browser.new_context(java_script_enabled=False,viewport={'width':390,'height':844})
     np=nojs.new_page();np.set_content(test_html)
     check('No-JS guide remains readable',np.locator('h1').is_visible() and np.locator('#invitation-body').is_visible())
+    check('Quick start works without JavaScript',np.locator('#small-start-title').is_visible() and np.locator('.small-start-steps li').count()==3)
+    check('No-JS new interactive controls stay hidden',not np.locator('#carry-invitation').is_visible() and not np.locator('[data-reflect-note]').first.is_visible())
     check('No-JS inactive controls stay hidden',not np.locator('#notebook-actions').is_visible())
     np.locator('.prompt-library>summary').click()
     check('No-JS all nine prompts accessible',all(np.locator('.prompt-columns li').nth(i).is_visible() for i in range(9)))
@@ -127,6 +212,6 @@ with sync_playwright() as p:
     hp.add_script_tag(content=reflection_js)
     check('Discovery card does not duplicate',hp.locator('#noticing-feature').count()==1)
     browser.close()
-report={'artifact_directory':str(OUT),'checks_passed':len(checks),'checks':checks,'limitations':['Offline layout checks intentionally inline only the new CSS and JS. Shared fonts and photographs require separate live visual verification.','This is a focused feature test, not a replacement for the repository-wide checks or live deployment verification.']}
+report={'artifact_directory':str(OUT),'checks_passed':len(checks),'checks':checks,'limitations':['Browser checks inline exact production HTML, CSS, JavaScript, brand fonts and portrait for offline rendering. They do not prove live CDN freshness or browser coverage beyond Chromium.','This is a focused feature test, not a replacement for the repository-wide checks or live deployment verification.']}
 (OUT/'local-test-results.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
 print(json.dumps(report,indent=2))
