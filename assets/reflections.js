@@ -57,6 +57,8 @@
 
 // A small, independent discovery card. The existing homepage HTML stays untouched.
 (() => {
+  // The optional discovery card also tolerates partial, non-browser DOM hosts.
+  if (typeof document.getElementById !== 'function') return;
   const start = document.getElementById('start-here');
   if (!start || document.getElementById('noticing-feature')) return;
   const feature = document.createElement('section');
