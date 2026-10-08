@@ -47,3 +47,32 @@ assert(home.includes('id="daily-feature"')&&home.includes('id="daily-status"'),'
 assert(daily.includes('id="daily-feature"')&&daily.includes('id="daily-status"'),'dedicated page integration exists');
 assert(home.includes('assets/daily.js')&&daily.includes('/assets/daily.js'),'both experiences share deterministic engine');
 console.log('Daily Dose checks PASS:',records,'distinct original records, 740 deterministic daily assignments, DST continuity, and two page integrations');
+
+// UTC-only CI cannot exercise local-day and daylight-saving regressions.
+const {spawnSync}=require('node:child_process');
+const zones=['UTC','America/Los_Angeles','America/New_York','Pacific/Honolulu',
+ 'Europe/Berlin','Australia/Lord_Howe','Pacific/Auckland','Asia/Kathmandu'];
+const testSource=`
+const assert=require('node:assert/strict');
+const {dailyDoseIndex}=require('./assets/daily.js');
+let assertions=0;
+for(let day=0;day<740;day++){
+ const date=new Date(2026,0,1+day,12);
+ const y=date.getFullYear(),m=date.getMonth(),d=date.getDate();
+ const expected=((Date.UTC(y,m,d)/86400000-Date.UTC(2026,9,5)/86400000)%370+370)%370;
+ for(const [h,min,sec] of [[0,0,0],[1,59,59],[2,30,0],[12,0,0],[23,59,59]]){
+  assert.equal(dailyDoseIndex(new Date(y,m,d,h,min,sec)),expected,'same local calendar day in '+process.env.TZ);assertions++;
+ }
+ assert.equal(dailyDoseIndex(new Date(y,m,d+1,0,0,0)),(expected+1)%370,'local midnight increments once');assertions++;
+}
+if(['America/Los_Angeles','America/New_York','Europe/Berlin','Australia/Lord_Howe','Pacific/Auckland'].includes(process.env.TZ)){
+ assert.notEqual(new Date(2026,0,15).getTimezoneOffset(),new Date(2026,6,15).getTimezoneOffset(),'this zone must actually exercise DST');assertions++;
+}
+console.log(JSON.stringify({timezone:process.env.TZ,assertions}));
+`;
+for(const zone of zones){
+ const run=spawnSync(process.execPath,['-e',testSource],{cwd:root,env:{...process.env,TZ:zone},encoding:'utf8',timeout:20000});
+ assert.equal(run.status,0,zone+': '+run.stderr);
+ console.log(run.stdout.trim());
+}
+console.log('Daily local-calendar matrix PASS:',zones.length,'timezones, 740 dates per timezone, near-midnight and DST cases');

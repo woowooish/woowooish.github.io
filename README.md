@@ -1,55 +1,48 @@
-# Woowooish
+# WooWooish
 
-Standalone recreation of the approved [Claude design](https://claude.ai/artifact/EufzTDh5NcKHBZ1BMgc5Y3), published with GitHub Pages at https://woowooish.com.
+A static website for small pauses, ordinary wonder and reflection. GitHub Pages publishes `main` from the repository root at `https://woowooish.com`. Keep `CNAME` and `.nojekyll` intact. The visitor-facing site has no package-install or build requirement, user account, live AI call or application database.
 
-## Edit and publish
+## Current experiences
 
-The site uses plain HTML, CSS and JavaScript. No build system, dependency installation, database or API key is required. GitHub Pages publishes the repository's `main` branch from its root. Keep `CNAME` set to `woowooish.com` and keep `.nojekyll`.
+- `index.html`: the centered Find Your Woo homepage, four experience choices, written and timed pauses, reflections, Our Story and email-draft forms.
+- `explore.html`: a directory of the experiences.
+- `pick-your-woo.html`: 412 original reflections, drawn at click time. `assets/woo-library.js` holds permanent IDs; `assets/woo-deck.js` handles browser-local history and native Web Locks where available. All three covers use the same unseen pool. Preserve IDs and storage keys when editing.
+- `daily-woo.html`: the same daily reflection shown on the homepage. `assets/daily.js` selects one of 370 original entries in `assets/doses/*.json` according to the local calendar date. Ten collections contain 37 entries each. There is no public archive picker. A failed or stalled request gives a retry; the selected content is not an attributed quotation or endorsement.
+- `gratitude-jar.html`: browser-local notes, explicit removal confirmation, backup downloads, and read-only recovery when saved data is malformed. Keep the original `woowooish-gratitude-v1` storage format compatible.
+- `the-art-of-noticing/`: a long-form field guide with nine invitations and a page-only notebook. Its copy/download tools do not automatically save writing between visits.
+- `what-is-woo.html`: introductory writing and a page-only reflection chooser.
+- `privacy.html`, `404.html`, `preview.html`: data controls, branded recovery and a noindex layout preview.
 
-- `index.html`: brand copy, written practice, original reflections and gathering interest cards.
-- `assets/site.css`: original design styles, mobile layout, keyboard focus and reduced motion.
-- `assets/site.js`: email drafts, gathering interest inquiries and practice controls.
-- `assets/pause.js`: the independent three-minute clock.
-- `assets/reflections.js`: opens linked reflections and copies questions or permanent links, with manual selection when clipboard access is unavailable.
-- `assets/daily.js`: selects a daily reminder using the visitor’s local calendar date, and opens direct links into the reminder archive.
-- `assets/fonts.css` and `assets/fonts/`: fonts from the reference, hosted locally.
-- `assets/annie-beach.webp` and `assets/annie-avatar.webp`: original portrait assets from the reference, optimized for the web.
-- `assets/annie-beach-walk-clean.webp`, `assets/annie-sailing.webp` and `assets/annie-mountain-walk.webp`: Annie’s approved personal photos, resized to 900 × 1200 WebP with embedded metadata removed. The About image includes an AI-assisted flyaway-hair cleanup; the original remains in `assets/annie-beach-walk.webp`. Desktop About cards have equal widths and matching heights; below 960px they stack and the photo uses its natural 3:4 aspect ratio. The hero stays unchanged.
-- `preview.html`: noindex phone (390px) and tablet (768px) frames for visual checking; check the main page separately on desktop.
-- `docs/BRAND_GUIDE.md`: voice, visual language and factual content rules.
-- `docs/OVERNIGHT_PLAN.md`: bounded overnight priorities, verification and progress.
-- `scripts/check-site.cjs`, `scripts/check-reflections.cjs`, `scripts/check-daily.cjs` and `scripts/check-photos.cjs`: interaction, structural, daily calendar and photo checks; run all four with Node.
+## Privacy and safe behavior
 
-## Current form behavior
+Contact and Tide forms prepare an email draft. Nothing is sent or subscribed automatically. Source submit buttons stay disabled until the draft handlers attach. The HTML policy blocks native form submission.
 
-Newsletter and contact forms validate inputs and prepare an email draft addressed to `woowooish@gmail.com`. Visitors review the draft and send it from their email application. No message is sent automatically. The Tide is an interest request, not an automatic subscription; there is no newsletter platform connected yet. No visitor details are stored on the website.
+`assets/site-privacy.js` controls the existing Umami integration. It restricts reporting to known production pages, respects DNT/GPC and the saved opt-out, excludes queries/fragments and visitor writing, and keeps analytics off when a preference is unreadable. Only the current `https://gateway.umami.is` collection origin is permitted by `connect-src`; the tracker script comes from `https://cloud.umami.is`. There is no ad-blocker bypass. This is not a claim that third-party scripts are incapable of reading page data; the public privacy notice states the limits.
 
-Every editable form control has an explicit HTML label. Contact labels stay visible after a visitor starts typing; the compact newsletter field uses a screen-reader label while keeping the approved pill layout.
+Browser storage is not encrypted or synced by this site. A backup is a private local file. Test with synthetic notes in a fresh browser profile, never a visitor's existing records. Unknown or malformed saved data must not be silently overwritten.
 
-After preparing a draft, visitors can use the email-app link or expand “Use another email service” to copy the full draft. Where clipboard writing is unavailable or denied, the control selects the draft for manual copying. Editing the form or choosing a new gathering idea clears the old draft. A delayed clipboard result cannot restore an obsolete draft status.
+The early meta Content Security Policy is duplicated across HTML entry points and checked automatically. It disallows inline JavaScript and eval while retaining existing inline design styles. Meta policy cannot substitute for response-header controls such as `frame-ancestors` or account security. Do not add ineffective meta tags claiming those controls exist.
 
-Gathering cards are explicitly ideas with no scheduled dates or places. Each “I’m interested” button pre-fills a contact inquiry; it does not reserve a place. Confirm the event schedule before accepting bookings.
+## Editing and checking
 
-The site includes four original readable reflections and an external Instagram profile link. Add specific post/reel links only when verified; do not imply that the original reflections are published reels. The free written practice works without JavaScript; its optional timer follows three one-minute stages and supports pausing and restarting. A second, non-timed “both-and” practice offers three short prompts for days when more than one feeling is present.
+Preserve the current layout, approved portraits, fonts and portrait-free sharing card. Follow `docs/BRAND_GUIDE.md`; do not invent Annie's history, qualifications, testimonials or first-person experiences. Earlier review documents are historical snapshots, not a specification to restore the old homepage or 14-entry archive.
 
-The hero includes a keyboard-accessible control that pauses or plays the decorative marquee and rotating seal. The site automatically stops those animations and hides the redundant control when the visitor has enabled reduced motion at the operating-system or browser level.
+For local viewing, run `python3 -m http.server 8000` from the repository and open the loopback address. Update asset query versions on every referencing page when changing a browser script or stylesheet.
 
-## Visitor paths and Annie’s voice
+Run the dependency-free source and state checks:
 
-“Start here” offers three routes: Find calm (the timer), Meet your feelings (the both-and practice), and Feel alive (the wonder reflection). The new section replaces the oversized decorative founder quote so useful choices appear sooner. Gathering ideas remain available further down the page and in the footer.
+```sh
+python3 scripts/check-quality.py
+for file in assets/*.js; do node --check "$file"; done
+for test in scripts/check-site.cjs scripts/check-reflections.cjs scripts/check-photos.cjs scripts/check-woo-deck.cjs scripts/check-gratitude.cjs scripts/check-privacy.cjs scripts/check-daily.cjs scripts/check-daily-loading.cjs; do node "$test"; done
+```
 
-The introduction connects Annie’s work in aerospace with her curiosity about consciousness and spirituality, without claiming scientific or spiritual credentials. The brand promise is remembering calm, peace and love already within. A featured note uses Annie’s supplied “Life doesn’t have to be perfect to feel beautiful” wording; no private circumstances are published.
+Run `node scripts/check-browser-runtime.cjs` with Node 22+ and Chrome/Chromium. It serves exact repository files on loopback, retains production CSP, uses native browser storage/locks, and intercepts all external requests. It uses no npm dependencies. An unavailable browser or navigation restriction fails the test rather than claiming success.
 
-Each reflection offers “Copy question” and “Copy link.” Direct hash links to a reflection open its native disclosure when JavaScript is available. With JavaScript disabled, all writing is still accessible through the native disclosures. Copy controls appear only after the enhancement loads, and an unavailable/denied clipboard exposes a selected read-only field. The feature adds no tracking, storage or external service.
+The optional Python browser suites require Playwright, BeautifulSoup and Chromium. They inline local assets and simulate platform boundaries for sandbox compatibility. They complement, not replace, the native browser job.
 
-## A Daily Dose of Woo
+## Publishing
 
-The section below Start here contains 14 curated reminders from Bashar, Joe Hudson, S. N. Goenka and Joe Dispenza. Each uses a brief source excerpt linked to an official source, a separately labelled original Woowooish reflection, and a small question/practice. It makes no medical claims or promises of a particular outcome, and publishes no private biographical details.
+The read-only Site quality checks workflow runs source/state and native-browser jobs. Confirm both pass before merging. Then verify the Pages deployment for the exact merge commit and smoke-test the public site. This workflow does not automatically protect `main` or make Pages wait for checks. Required reviews/status checks and hosting response headers are separate owner-level controls. Roll back with a reviewed revert, not a reset over another contributor's work.
 
-The featured reminder follows the visitor’s local calendar day and repeats after 14 days; this is an honest starter collection, not a claim of newly written content every day. It refreshes after midnight or when a visitor returns to the tab. Native archive disclosures expose every reminder even without JavaScript. Daily selection moves the existing note rather than duplicating its ID or text. Direct links open the archive and destination note. The existing copy controls also work for these notes, with manual selection when clipboard access is absent or denied. No API, database, cookies, visitor storage or tracking is added.
-
-To edit the collection, edit the `.dose-entry` cards in `index.html`, retain their stable `dose-…` IDs, verify the quoted wording against the linked source, and clearly separate original commentary from quotations. Keep quotations brief across the complete collection. Bump the stylesheet/changed script and preview iframe version strings after edits to avoid stale browser caches.
-
-## Local preview
-
-From the repository folder, run `python3 -m http.server 8000`, then open `http://localhost:8000`. Changes to `main` trigger the existing GitHub Pages deployment. Check desktop and phone layouts and both forms before publishing edits.
+The separately prepared social-sharing upgrade is not part of the hardening releases unless an explicitly reviewed later change introduces it.

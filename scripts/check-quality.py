@@ -22,6 +22,9 @@ for p,d in docs.items():
     check(name+': image alternatives',all('alt' in a for a in d.find('img')))
     policy=d.find('meta',**{'http-equiv':'Content-Security-Policy'})
     check(name+': CSP',len(policy)==1 and all(v in policy[0]['content'] for v in ["script-src 'self' https://cloud.umami.is", "form-action 'none'", "base-uri 'none'", "object-src 'none'"]))
+    directives={part.strip().split()[0]:part.strip().split()[1:] for part in policy[0]['content'].split(';') if part.strip()}
+    check(name+': exact analytics collection origin',set(directives.get('connect-src',[]))=={"'self'",'https://gateway.umami.is'})
+    check(name+': policy before executable assets',text.index('Content-Security-Policy')<text.find('<script') if '<script' in text else True)
     check(name+': no unsafe script exceptions',"'unsafe-inline'" not in policy[0]['content'].split('script-src ')[1].split(';')[0] and "'unsafe-eval'" not in policy[0]['content'])
     check(name+': no inline scripts or event attributes',not re.search(r'<script(?:\s[^>]*)?>(?!\s*</script>)',text) and not any(k.lower().startswith('on') for t,a in d.tags for k in a))
     check(name+': no raw tracker injection',not any('cloud.umami.is' in a.get('src','') for a in d.find('script')))

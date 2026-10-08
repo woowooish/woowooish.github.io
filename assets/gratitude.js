@@ -2,11 +2,12 @@
 (() => {
   'use strict';
   const get = id => document.getElementById(id);
-  const needed = ['gratitude-form','thought','entries','glass','count','status','jar-storage','jar-export','jar-more','jar-confirm','jar-keep','jar-remove','jar-confirm-text'];
+  const needed = ['gratitude-form','thought','entries','glass','count','status','jar-storage','jar-export','jar-more','jar-confirm','jar-keep','jar-remove','jar-confirm-text','jar-tools','jar-loading'];
   if (!window.WooGratitude || !needed.every(id => get(id))) return;
   const store = WooGratitude.create();
   const input = get('thought');
   const submit = get('gratitude-form').querySelector('[type="submit"]');
+  if (!submit) return;
   const status = get('status');
   let snapshot;
   let shown = 30;
@@ -29,8 +30,8 @@
           (snapshot.coordinated ? 'Changes are coordinated between tabs.' : 'Use one tab at a time to avoid conflicting changes.')
         : 'Browser storage is unavailable. Notes last only while this page stays open. Download a backup before leaving.';
     submit.disabled = busy || snapshot.blocked;
-    get('jar-export').disabled = !notes.length && !input.value.trim() && !snapshot.recovery;
-    get('jar-export').textContent = snapshot.blocked ? 'Download original saved data' : 'Download a backup';
+    get('jar-export').disabled = !notes.length && !input.value.trim() && snapshot.recovery === null;
+    get('jar-export').textContent = snapshot.blocked ? (input.value ? 'Download recovery backup' : 'Download original saved data') : 'Download a backup';
     const list = get('entries');
     list.replaceChildren();
     if (!notes.length) {
@@ -101,20 +102,25 @@
   });
   get('jar-export').addEventListener('click', () => {
     const current = store.load();
-    const raw = current.blocked ? current.recovery : JSON.stringify({format:'woowooish-gratitude-backup-v1',
+    const recoveryWithDraft = current.blocked && Boolean(input.value);
+    const raw = current.blocked ? (recoveryWithDraft ? JSON.stringify({format:'woowooish-gratitude-recovery-v1',
+      originalStorage:current.recovery, readableNotes:current.items, unsavedDraft:input.value}, null, 2) : current.recovery) : JSON.stringify({format:'woowooish-gratitude-backup-v1',
       notes:current.items,unsavedDraft:input.value}, null, 2);
     if (typeof raw !== 'string') {status.textContent = 'There is no saved data to export yet.';return;}
     let url;
     try {
       url = URL.createObjectURL(new Blob([raw],{type:'application/json;charset=utf-8'}));
-      const link = document.createElement('a');link.href = url;link.download = current.blocked ? 'woowooish-gratitude-original.txt' : 'woowooish-gratitude-backup.json';
+      const link = document.createElement('a');link.href = url;link.download = recoveryWithDraft ? 'woowooish-gratitude-recovery.json' : current.blocked ? 'woowooish-gratitude-original.txt' : 'woowooish-gratitude-backup.json';
       document.body.append(link);link.click();link.remove();
       status.textContent = 'Backup prepared. Check your downloads and keep this private file somewhere safe. Nothing was uploaded.';
     } catch (_) {status.textContent = 'A file could not be prepared. Select and copy your notes before leaving.';}
     finally {if (url) setTimeout(() => URL.revokeObjectURL(url), 10000);}
   });
   get('jar-more').addEventListener('click', () => {shown += 30;render();status.textContent = 'Showing up to ' + shown + ' recent notes.';});
-  input.addEventListener('input', () => {get('jar-export').disabled = !input.value.trim() && !snapshot.items.length && !snapshot.recovery;});
+  input.addEventListener('input', () => {
+    get('jar-export').disabled = !input.value.trim() && !snapshot.items.length && snapshot.recovery === null;
+    get('jar-export').textContent = snapshot.blocked ? (input.value ? 'Download recovery backup' : 'Download original saved data') : 'Download a backup';
+  });
   window.addEventListener('storage', event => {
     if (event.key === WooGratitude.key || event.key === null) {cancelRemoval(false);render();status.textContent = 'The jar was refreshed after another tab changed browser storage. Your draft is unchanged.';}
   });
