@@ -34,6 +34,34 @@ jobs:
         run: |
           node scripts/check-gratitude.cjs
           node scripts/check-privacy.cjs
+      - name: Prepare source-only review evidence
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, pathlib, subprocess, zipfile
+          root = pathlib.Path('.')
+          output = root / 'audit-evidence'
+          output.mkdir(exist_ok=True)
+          tracked = subprocess.check_output(['git', 'ls-files', '-z']).decode().split('\0')
+          extensions = {'.html', '.js', '.cjs', '.py', '.css', '.md', '.json', '.yml', '.yaml', '.txt', '.xml', '.svg'}
+          manifest = {'commit': subprocess.check_output(['git', 'rev-parse', 'HEAD']).decode().strip(), 'files': {}}
+          with zipfile.ZipFile(output / 'source-text.zip', 'w', zipfile.ZIP_DEFLATED) as archive:
+              for name in sorted(filter(None, tracked)):
+                  path = root / name
+                  if path.is_symlink() or not path.is_file():
+                      continue
+                  data = path.read_bytes()
+                  manifest['files'][name] = hashlib.sha256(data).hexdigest()
+                  if path.suffix in extensions or name in {'CNAME', '.nojekyll', '.gitignore'}:
+                      archive.writestr(name, data)
+              archive.writestr('review-manifest.json', json.dumps(manifest, indent=2) + '\n')
+          PY
+      - name: Retain review evidence without photos or font files
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4 immutable pin
+        with:
+          name: source-review-evidence
+          path: audit-evidence/source-text.zip
+          retention-days: 7
+          if-no-files-found: error
   browser:
     name: Browser policy and native cross-tab checks
     runs-on: ubuntu-24.04
