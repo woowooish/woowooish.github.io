@@ -30,6 +30,7 @@ jobs:
           node scripts/check-reflections.cjs
           node scripts/check-daily.cjs
           node scripts/check-daily-loading.cjs
+          node scripts/check-daily-sharing.cjs
           node scripts/check-photos.cjs
           node scripts/check-woo-deck.cjs
       - name: Note storage and analytics regression tests
@@ -77,6 +78,7 @@ jobs:
           node scripts/check-browser-runtime.cjs
           node scripts/check-legacy-runtime.cjs
           node scripts/check-hardening-runtime.cjs
+          node scripts/check-daily-sharing-browser.cjs
   live:
     name: Public release byte verification
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
