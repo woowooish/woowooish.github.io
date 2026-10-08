@@ -37,7 +37,7 @@ async function main(){
   async function legacy(key,value){await older.eval(value===null?`localStorage.removeItem(${JSON.stringify(key)})`:`localStorage.setItem(${JSON.stringify(key)},${JSON.stringify(value)})`);}
   async function openJar(){await go(current,'/gratitude-jar.html');await current.wait("document.getElementById('jar-loading').hidden");}
   async function readRaw(key){return current.eval(`(async()=>{const db=await new Promise((ok,no)=>{const r=indexedDB.open('woowooish.browser-data.v1',1);r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)});try{return await new Promise((ok,no)=>{const r=db.transaction('values').objectStore('values').get(${JSON.stringify(key)});r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)})}finally{db.close()}})()`);}
-  async function download(name){const f=path.join(downloads,name);if(fs.existsSync(f))fs.unlinkSync(f);await current.eval("document.getElementById('jar-export').click()");for(let n=0;n<160&&!fs.existsSync(f);n++)await sleep(40);assert(fs.existsSync(f),'Recovery file was downloaded');return JSON.parse(fs.readFileSync(f,'utf8'));}
+  async function download(name,t=current){const f=path.join(downloads,name);if(fs.existsSync(f))fs.unlinkSync(f);await t.eval("document.getElementById('jar-export').click()");for(let n=0;n<160&&!fs.existsSync(f);n++)await sleep(40);assert(fs.existsSync(f),'Recovery file was downloaded');return JSON.parse(fs.readFileSync(f,'utf8'));}
 
   await scenario('Cycle generations cannot pollute one another',async()=>{
     await go(current,'/pick-your-woo.html');const ids=await current.eval('WooLibrary.entries.map(e=>e.id)');
@@ -109,6 +109,24 @@ async function main(){
     await legacy(jarKey,null);
   });
 
+  await scenario('Draft backups never overstate inaccessible storage',async()=>{
+    for(const mode of ['fallback','first-atomic']){
+      await raw(jarKey,undefined);
+      const denied=await tab();
+      const denial="throw new DOMException('SYNTHETIC denied storage','SecurityError')";
+      const init="Object.defineProperty(window,'localStorage',{configurable:true,get(){"+denial+"}});"+
+        (mode==='fallback'?"Object.defineProperty(window,'indexedDB',{configurable:true,get(){"+denial+"}});":'');
+      await denied.send('Page.addScriptToEvaluateOnNewDocument',{source:init});
+      await go(denied,'/gratitude-jar.html');await denied.wait("document.getElementById('jar-loading').hidden");
+      await denied.eval("document.getElementById('thought').value='SYNTHETIC denied-storage draft';document.getElementById('thought').dispatchEvent(new Event('input'))");
+      const backup=await download('woowooish-gratitude-backup.json',denied);
+      check(mode+': unavailable storage is reported truthfully',backup.storageUnavailable===true);
+      check(mode+': unchecked older storage is not marked checked',backup.olderTabStorageChecked===false);
+      check(mode+': a draft is preserved despite storage denial',backup.unsavedDraft==='SYNTHETIC denied-storage draft'&&backup.notes.length===0);
+      await go(denied,'/privacy.html');
+    }
+  });
+
   await scenario('Untrusted note text remains inert',async()=>{
     await legacy(jarKey,null);await openJar();
     const payload='<img src=x onerror="window.__wooXSS=true"><script>window.__wooXSS=true</script>';
@@ -124,4 +142,6 @@ async function main(){
   tabs.forEach(t=>t.close());if(browser)browser.close();chrome.kill('SIGTERM');await Promise.race([new Promise(r=>chrome.once('exit',r)),sleep(1000)]);if(chrome.exitCode===null)chrome.kill('SIGKILL');server.closeAllConnections();await new Promise(r=>server.close(r));try{fs.rmSync(work,{recursive:true,force:true,maxRetries:10,retryDelay:150});}catch(_){}
  }
 }
-main().catch(e=>{console.error(e);process.exitCode=1;});
+const releaseTests=spawnSync('python3',[path.join(root,'scripts/check-live-test.py')],{stdio:'inherit'});
+if(releaseTests.status!==0){console.error('Release-verification regressions failed');process.exitCode=1;}
+else main().catch(e=>{console.error(e);process.exitCode=1;});
