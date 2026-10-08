@@ -161,26 +161,12 @@ a,button { transition:filter .18s ease, color .18s ease; }
 .dose-takeaway {font-size:19px;line-height:1.65;margin:20px 0 24px;}
 .dose-note .reflection-prompt {font-size:17px;line-height:1.6;margin:0 0 8px;}
 .daily-collection-note {max-width:60em;font-size:14px;line-height:1.65;margin:20px 0;}
-.daily-archive {border-top:1px solid #b8d5df;border-bottom:1px solid #b8d5df;}
-.daily-archive>summary {padding:20px 0;cursor:pointer;font-size:17px;font-weight:600;min-height:48px;}
-.daily-archive>summary>span {float:right;}
-.dose-library {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 32px;padding-bottom:24px;align-items:start;}
-.dose-entry {min-width:0;border-top:1px solid #b8d5df;}
-.dose-entry>summary {cursor:pointer;min-height:64px;padding:18px 4px;font-size:17px;line-height:1.5;}
-.dose-summary-teacher {display:block;margin-top:4px;font:11px/1.6 'Space Mono',monospace;}
-.dose-entry .dose-note {display:block;padding:24px;border-radius:24px;margin-bottom:20px;}
-.dose-entry .dose-reflection-side {border-top:1px solid #b8d5df;padding-top:20px;margin-top:20px;}
-.dose-entry .dose-note h3 {font-size:30px;}
-.dose-entry .dose-note blockquote {font-size:25px;}
-.dose-entry .dose-takeaway {font-size:17px;}
-.dose-today-link {margin-bottom:16px;}
 @media(max-width:700px) {
  .daily-heading {align-items:start;}
  .dose-sun {width:52px;height:52px;font-size:36px;}
  .daily-heading h2 {font-size:clamp(36px,8vw,54px);}
  .dose-note {grid-template-columns:1fr;}
  .dose-reflection-side {border-top:1px solid #b8d5df;padding-top:24px;}
- .dose-library {grid-template-columns:1fr;}
 }
 .featured-note {display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:clamp(28px,5vw,72px);padding:clamp(24px,4vw,56px);margin-bottom:28px;border-radius:32px;background:#e1f1f6;}
 .featured-note h3 {font-size:clamp(40px,5vw,72px);line-height:.95;letter-spacing:-.04em;margin:22px 0;}
@@ -221,6 +207,29 @@ a,button { transition:filter .18s ease, color .18s ease; }
  *,*::before,*::after {animation:none !important;transition:none !important;}
 }
 
+
+
+/* Daily Dose of Woo: one original reflection each day, never an archive */
+.ww-daily-note {background:linear-gradient(135deg,#e5f2f1,#eaf0fa);border:1px solid #c4e0e4;box-shadow:0 14px 40px #16394c13;}
+.ww-daily-note h3 {font-size:clamp(30px,3.8vw,50px);margin:18px 0 20px;}
+.ww-daily-reflection {font-size:clamp(19px,2.2vw,25px);line-height:1.58;letter-spacing:-.018em;margin:0 0 23px;max-width:36em;}
+.ww-daily-note .dose-attribution {font-size:13px;line-height:1.6;font-weight:700;margin:19px 0 8px;color:#276477;}
+.ww-daily-note .dose-source {font-size:13px;font-weight:650;text-decoration:underline;text-underline-offset:4px;}
+.ww-daily-reflect-heading {font-size:clamp(25px,2.5vw,34px);letter-spacing:-.03em;line-height:1.15;margin:18px 0 16px;}
+.ww-daily-question {font-size:clamp(18px,2vw,24px) !important;line-height:1.55 !important;font-weight:500;margin:0 0 24px !important;}
+.ww-daily-copy {display:inline-flex;align-items:center;justify-content:center;min-height:44px;border:0;border-radius:99px;padding:13px 20px;background:#052453;color:#fff;font:750 14px/1.4 'Bricolage Grotesque',system-ui,sans-serif;cursor:pointer;text-align:center;}
+.ww-daily-copy:hover {filter:brightness(1.15);}
+.ww-daily-return {color:#4c6d75;font-size:14px;line-height:1.6;margin:25px 0 0;}
+.ww-daily-load-status {color:#3c6772;font-size:15px;line-height:1.6;min-height:1.3em;margin:0 0 13px;}
+.ww-daily-load-status:empty{display:none;}
+.ww-daily-full-page{display:inline-flex;align-items:center;justify-content:center;min-height:46px;background:#052453;color:#fff;border-radius:99px;padding:13px 23px;font-weight:750;font-size:14px;}
+.ww-daily-full-page:hover{color:#fff;filter:brightness(1.15);}
+@media(max-width:700px){
+ .ww-daily-note{grid-template-columns:1fr;padding:clamp(25px,6vw,35px);}
+ .ww-daily-note .dose-reflection-side{border-top:1px solid #bfd9df;padding-top:23px;}
+ .ww-daily-note h3{font-size:clamp(30px,7vw,41px);}
+ .ww-daily-reflection{font-size:20px;}
+}
 
 /* Centered Find Your Woo homepage */
 .ww-home-centered {
