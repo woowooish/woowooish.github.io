@@ -43,4 +43,4 @@ jobs:
         with:
           persist-credentials: false
       - name: Exercise real pages with security policy enabled
-        run: node scripts/check-browser-runtime.cjs
+        run: node scripts/debug-native-draw.cjs
