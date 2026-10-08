@@ -40,6 +40,7 @@
     function blank(day) { return {schema: 1, seen: [], day, today: [], last: null, cycles: 0}; }
     function normalize(raw, day) {
       if (raw === null) return blank(day);
+      if (typeof raw === 'string' && raw.length > 3 * 1024 * 1024) { recovered = true; return blank(day); }
       let saved;
       try { saved = typeof raw === 'string' ? JSON.parse(raw) : raw; } catch (_) { recovered = true; return blank(day); }
       if (!saved || saved.schema !== 1 || !Array.isArray(saved.seen) || !Array.isArray(saved.today) ||
@@ -91,10 +92,11 @@
     }
     function next() {
       const task = queue.then(() => {
-        if (atomic) return atomic.run(raw => {
+        if (atomic) return atomic.run((raw, status) => {
+          if (status.legacyRecovery !== null) {const error = new Error('storage-unavailable'); error.code = 'storage-unavailable'; throw error;}
           let nextRaw = raw;
           const value = drawNow({getItem: () => raw, setItem: (_, encoded) => {nextRaw = encoded;}});
-          value.persistent = true; value.coordinated = true;
+          value.persistent = true; value.coordinated = true; value.legacyUnavailable = status.legacyUnavailable;
           return {raw: nextRaw, value};
         }).then(result => result.value);
         if (locks && typeof locks.request === 'function') return locks.request(LOCK, () => drawNow());

@@ -13,6 +13,9 @@
   let shown = 30;
   let pending = null;
   let busy = false;
+  const hasRecovery = value => value.recovery !== null || value.legacyRecovery !== null;
+  const recoveryLabel = value => value.legacyRecovery !== null || input.value
+    ? 'Download recovery backup' : 'Download original saved data';
   function cancelRemoval(focus) {
     pending = null;
     get('jar-confirm').hidden = true;
@@ -25,15 +28,19 @@
       (snapshot.unavailable ? ' shown here; saved storage is temporarily unavailable.' : snapshot.persistent ? ' saved in this browser.' : ' in this open visit, not saved across visits.');
     get('jar-storage').textContent = snapshot.unavailable
       ? 'Saved notes could not be opened. They have not been erased. Copy your draft or download a backup of the notes shown here, then reload to retry.'
+      : snapshot.legacyRecovery !== null
+      ? 'An older tab left data that needs attention. Both copies are unchanged. Download a recovery backup to keep them; adding and removing are paused.'
       : snapshot.blocked
       ? 'Some saved data could not be read safely. Your original storage has not been changed. Download a backup before seeking help; adding and removing are paused.'
+      : snapshot.legacyUnavailable
+      ? 'Saved notes are available, but older-tab storage could not be checked. Keep a backup and refresh older tabs before continuing there.'
       : snapshot.persistent
         ? 'Notes are stored on this device, not in a website account. Keep a backup: browser data can be cleared. ' +
           (snapshot.coordinated ? 'Changes are coordinated between tabs.' : 'Use one tab at a time to avoid conflicting changes.')
         : 'Browser storage is unavailable. Notes last only while this page stays open. Download a backup before leaving.';
     submit.disabled = busy || snapshot.blocked;
-    get('jar-export').disabled = !notes.length && !input.value.trim() && snapshot.recovery === null;
-    get('jar-export').textContent = snapshot.recovery !== null ? (input.value ? 'Download recovery backup' : 'Download original saved data') : 'Download a backup';
+    get('jar-export').disabled = !notes.length && !input.value.trim() && !hasRecovery(snapshot);
+    get('jar-export').textContent = hasRecovery(snapshot) ? recoveryLabel(snapshot) : 'Download a backup';
     const list = get('entries');
     list.replaceChildren();
     if (!notes.length) {
@@ -87,7 +94,7 @@
       const result = await store.add(value);
       if (input.value === value) input.value = '';
       status.textContent = result.persistent ? 'Your note was saved in this browser.' : 'Added for this open visit only. Download a backup to keep it.';
-    } catch (error) {status.textContent = describe(error);}
+    } catch (error) {await store.refresh();status.textContent = describe(error);}
     finally {busy = false; render(); input.focus({preventScroll: true});}
   });
   get('jar-keep').addEventListener('click', () => {cancelRemoval(true);status.textContent = 'Your note is unchanged.';});
@@ -99,16 +106,17 @@
     const id = pending;
     busy = true; get('jar-remove').disabled = true; get('jar-keep').disabled = true; render();
     try {await store.remove(id);status.textContent = 'That note was removed. Downloaded backups are unchanged.';}
-    catch (error) {status.textContent = describe(error);}
+    catch (error) {await store.refresh();status.textContent = describe(error);}
     finally {busy = false;get('jar-remove').disabled = false;get('jar-keep').disabled = false;cancelRemoval(true);render();}
   });
   get('jar-export').addEventListener('click', async () => {
     const current = await store.refresh();
-    const corrupt = current.blocked && current.recovery !== null;
-    const recoveryWithDraft = corrupt && Boolean(input.value);
+    const corrupt = hasRecovery(current);
+    const recoveryWithDraft = corrupt && (Boolean(input.value) || current.legacyRecovery !== null);
     const raw = corrupt ? (recoveryWithDraft ? JSON.stringify({format:'woowooish-gratitude-recovery-v1',
-      originalStorage:current.recovery, readableNotes:current.items, unsavedDraft:input.value}, null, 2) : current.recovery) : JSON.stringify({format:'woowooish-gratitude-backup-v1',
-      notes:current.items,unsavedDraft:input.value}, null, 2);
+      originalStorage:current.recovery, olderTabStorage:current.legacyRecovery, readableNotes:current.items, unsavedDraft:input.value}, null, 2) : current.recovery) : JSON.stringify({format:'woowooish-gratitude-backup-v1',
+      notes:current.items,unsavedDraft:input.value,storageUnavailable:current.unavailable,
+      olderTabStorageChecked:!current.legacyUnavailable}, null, 2);
     if (typeof raw !== 'string') {status.textContent = 'There is no saved data to export yet.';return;}
     let url;
     try {
@@ -121,11 +129,11 @@
   });
   get('jar-more').addEventListener('click', () => {shown += 30;render();status.textContent = 'Showing up to ' + shown + ' recent notes.';});
   input.addEventListener('input', () => {
-    get('jar-export').disabled = !input.value.trim() && !snapshot.items.length && snapshot.recovery === null;
-    get('jar-export').textContent = snapshot.recovery !== null ? (input.value ? 'Download recovery backup' : 'Download original saved data') : 'Download a backup';
+    get('jar-export').disabled = !input.value.trim() && !snapshot.items.length && !hasRecovery(snapshot);
+    get('jar-export').textContent = hasRecovery(snapshot) ? recoveryLabel(snapshot) : 'Download a backup';
   });
   window.addEventListener('storage', event => {
-    if (event.key === WooGratitude.key || event.key === null) {cancelRemoval(false);render();status.textContent = 'The jar was refreshed after another tab changed browser storage. Your draft is unchanged.';}
+    if (event.key === WooGratitude.key || event.key === null) {cancelRemoval(false);refreshView();status.textContent = 'The jar was refreshed after another tab changed browser storage. Your draft is unchanged.';}
   });
   async function refreshView() {
     if (busy) return;

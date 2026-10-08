@@ -132,7 +132,7 @@ async function main(){
     await go(tab,'/pick-your-woo.html');
     check('Native history preserves migration plus 200 new draws after navigation',await tab.eval("WooAtomic.create(WooDeck.storageKey).run(raw=>({raw,value:JSON.parse(raw).seen.length})).then(r=>r.value===202)"));
     check('Both pre-existing picks were excluded',results.flat().every(id=>!['original-01','original-02'].includes(id)));
-    check('Successful migration removes the exact superseded legacy copy',await tab.eval("localStorage.getItem(WooDeck.storageKey)===null"));
+    check('Migration retains legacy data instead of racing a newer write',await tab.eval("localStorage.getItem(WooDeck.storageKey)!==null"));
     await tab.eval("document.querySelector('#cards .card').click()");await tab.wait("!document.getElementById('result').hidden",'picker result');
     const first=await tab.eval("document.getElementById('result').dataset.wooId");
     await tab.eval("document.getElementById('again').click();document.querySelector('#cards .card').click()");
@@ -158,6 +158,8 @@ async function main(){
     check('Cancel does not delete a note',await tab.eval("WooAtomic.create(WooGratitude.key).run(raw=>({raw,value:JSON.parse(raw).length})).then(r=>r.value===61)"));
     check('An aborted browser transaction preserves saved notes',await tab.eval("WooAtomic.create(WooGratitude.key).run(()=>{throw new Error('SYNTHETIC abort')}).then(()=>false,()=>WooAtomic.create(WooGratitude.key).run(raw=>({raw,value:JSON.parse(raw).length})).then(r=>r.value===61))"));
     // Empty corrupt strings must be downloadable without altering browser storage.
+    // Isolate the single-corrupt-record case from deliberately retained legacy copies.
+    await tab.eval("localStorage.removeItem(WooGratitude.key)");
     await tab.eval("WooAtomic.create(WooGratitude.key).run(()=>({raw:'',value:null}))");await go(tab,'/gratitude-jar.html');
     await tab.wait("!document.getElementById('jar-tools').hidden",'corrupt jar open');
     check('Empty unreadable record remains exportable',await tab.eval("!document.getElementById('jar-export').disabled"));
