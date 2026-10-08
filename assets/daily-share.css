@@ -1,18 +1,35 @@
-/* Scoped styles: the existing Daily Dose, photographs and site design stay intact. */
+/* Scoped sharing UI. Existing page design and content are unchanged. */
 .ww-daily-share{margin-top:24px;padding:24px clamp(16px,3vw,30px);border:1px solid #b6d7d2;border-radius:24px;background:#f1f8f5;color:#052453}
-.ww-daily-share h3{font:700 clamp(20px,3vw,25px)/1.25 'Bricolage Grotesque',sans-serif;margin:0 0 16px;letter-spacing:-.02em}
-.ww-daily-share-actions{display:flex;align-items:center;flex-wrap:wrap;gap:12px}
-.ww-daily-share-actions button,.ww-daily-share-actions a{display:inline-flex;align-items:center;justify-content:center;min-height:46px;box-sizing:border-box;padding:12px 20px;border:1px solid #052453;border-radius:999px;font:700 14px/1.35 'Bricolage Grotesque',sans-serif;text-decoration:none;cursor:pointer;background:transparent;color:#052453;text-align:center}
+.ww-daily-share h3{font:700 clamp(20px,3vw,25px)/1.25 'Bricolage Grotesque',sans-serif;margin:0 0 8px;letter-spacing:-.02em}
+.ww-daily-share-lead{font:400 15px/1.5 'Bricolage Grotesque',sans-serif;margin:0 0 20px;max-width:60ch}
+.ww-daily-share-body{display:grid;grid-template-columns:minmax(0,144px) minmax(0,1fr);gap:24px;align-items:start}
+.ww-daily-share-figure{margin:0;min-width:0}
+.ww-daily-share-preview{display:block;max-width:100%;width:144px;height:auto;border:1px solid #b6d7d2;border-radius:10px;box-sizing:border-box;-webkit-touch-callout:default;user-select:auto}
+.ww-daily-share-size{font:400 11px/1.5 'Bricolage Grotesque',sans-serif;margin-top:8px;color:#32666a}
+.ww-daily-share-controls{min-width:0}
+.ww-daily-share-formats{border:0;margin:12px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.ww-daily-share-formats legend{font-size:12px;font-weight:600;margin-bottom:8px}
+.ww-daily-share-formats label{position:relative;display:inline-flex;cursor:pointer}
+.ww-daily-share-formats input{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);margin:0}
+.ww-daily-share-formats span{display:inline-flex;align-items:center;min-height:44px;padding:0 15px;border:1px solid #59747c;border-radius:999px;box-sizing:border-box;font:600 13px/1.4 'Bricolage Grotesque',sans-serif}
+.ww-daily-share-formats input:checked+span{background:#c5e9e5;border:2px solid #052453;padding-inline:14px}
+.ww-daily-share-formats input:disabled+span{opacity:.65;cursor:wait}
+.ww-daily-share-formats input:focus-visible+span{outline:3px solid #176f86;outline-offset:4px}
+.ww-daily-share-actions,.ww-daily-share-extras{display:flex;align-items:center;flex-wrap:wrap;gap:10px}
+.ww-daily-share-actions button,.ww-daily-share-actions a,.ww-daily-share-open{display:inline-flex;align-items:center;justify-content:center;min-height:46px;box-sizing:border-box;padding:12px 18px;border:1px solid #052453;border-radius:999px;font:700 14px/1.35 'Bricolage Grotesque',sans-serif;text-decoration:none;cursor:pointer;background:transparent;color:#052453;text-align:center}
 .ww-daily-share-actions .ww-daily-share-primary{background:#052453;color:#fff}
 .ww-daily-share-actions :disabled{opacity:.65;cursor:wait}
 .ww-daily-share :focus-visible{outline:3px solid #176f86;outline-offset:4px}
-.ww-daily-share-help,.ww-daily-share-status,.ww-daily-share-details p{font:400 14px/1.6 'Bricolage Grotesque',sans-serif;max-width:68ch;margin:14px 0 0}
+.ww-daily-share-help,.ww-daily-share-status,.ww-daily-share-details p,.ww-daily-share-next p{font:400 14px/1.6 'Bricolage Grotesque',sans-serif;max-width:68ch;margin:12px 0 0}
 .ww-daily-share-status:empty{display:none}
 .ww-daily-share-status{font-weight:600}
-.ww-daily-share-details{margin-top:16px}
-.ww-daily-share-details summary{font-size:14px;font-weight:700;cursor:pointer;padding:8px 0;min-height:28px}
-.ww-daily-share-preview{display:block;max-width:100%;width:324px;height:auto;margin-top:16px;border:1px solid #b6d7d2;border-radius:12px;-webkit-touch-callout:default;user-select:auto}
-.ww-daily-share-details .ww-daily-share-actions{margin-top:14px}
+.ww-daily-share-extras{margin-top:6px;gap:4px 16px}
+.ww-daily-share-extras button{min-height:44px;padding:8px 0;border:0;background:transparent;color:#052453;font:600 13px/1.4 'Bricolage Grotesque',sans-serif;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.ww-daily-share-extras button:disabled{opacity:.65;cursor:wait}
+.ww-daily-share-next .ww-daily-share-open{margin-top:10px}
+.ww-daily-share-details{margin-top:14px;border-top:1px solid #b6d7d2;padding-top:8px}
+.ww-daily-share-details summary{font-size:14px;font-weight:600;cursor:pointer;padding:8px 0;min-height:28px}
 .ww-daily-share-manual{display:block;box-sizing:border-box;width:100%;max-width:680px;margin-top:16px;padding:12px;border:1px solid #59747c;border-radius:8px;background:white;color:#052453;font:400 16px/1.5 sans-serif}
 .ww-daily-share [hidden]{display:none!important}
+@media(max-width:560px){.ww-daily-share-body{grid-template-columns:minmax(0,1fr) 70px;gap:12px}.ww-daily-share-figure{order:2}.ww-daily-share-preview{width:70px}.ww-daily-share-size{font-size:11px}.ww-daily-share-actions{gap:8px}.ww-daily-share-actions .ww-daily-share-primary{flex:1 1 auto;padding-inline:12px}.ww-daily-share-formats span{padding-inline:12px}.ww-daily-share-formats input:checked+span{padding-inline:11px}}
 @media(prefers-reduced-motion:reduce){.ww-daily-share *{scroll-behavior:auto;transition:none}}

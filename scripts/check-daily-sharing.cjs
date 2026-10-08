@@ -8,6 +8,8 @@ const sharing = require('../assets/daily-share.js');
 const ctx = {font: '', measureText(text) {return {width: Array.from(text).length * parseFloat(this.font.match(/([\d.]+)px/)[1]) * 0.58};}};
 let count = 0, smallestBody = Infinity;
 assert.equal(sharing.WIDTH, 1080); assert.equal(sharing.HEIGHT, 1350);
+assert.equal(sharing.FORMATS.story.height, 1920);
+assert.equal(sharing.FORMATS.story.offset, 220);
 for (const name of fs.readdirSync(path.join(root, 'assets/doses'))) {
   if (!name.endsWith('.json')) continue;
   const data = JSON.parse(fs.readFileSync(path.join(root, 'assets/doses', name), 'utf8'));
@@ -29,11 +31,11 @@ const unbroken = 'a'.repeat(180);
 assert.equal(sharing.wrapLines(ctx, unbroken, 904).join(''), unbroken);
 for (const file of ['index.html', 'daily-woo.html']) {
   const html = fs.readFileSync(path.join(root, file), 'utf8');
-  assert.match(html, /daily-share\.js\?v=20261008-instagram-1/);
-  assert.match(html, /daily-share\.css\?v=20261008-instagram-1/);
+  assert.match(html, /daily-share\.js\?v=20261008-sharing-2/);
+  assert.match(html, /daily-share\.css\?v=20261008-sharing-2/);
 }
 const source = fs.readFileSync(path.join(root, 'assets/daily-share.js'), 'utf8');
 assert(!/\bfetch\s*\(|XMLHttpRequest|html2canvas|FB\.init|access_token|innerHTML\s*=/.test(source), 'No SDK, server request, token or HTML interpolation');
-assert(source.includes('navigator.share({files: [file]})'), 'Share the actual image, not merely a link');
+assert(source.includes('sharePayload({files: [image.file]}, true)'), 'Share the actual image, not merely a link');
 assert(source.includes("error.name === 'AbortError'"), 'Cancel must be handled explicitly');
 console.log(JSON.stringify({status: 'PASS',reflections: count,smallestBodyPx: smallestBody,scope: 'all original text retained and fits; dependency-free layout and source checks'}));
