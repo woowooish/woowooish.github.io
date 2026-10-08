@@ -1,0 +1,35 @@
+name: Site quality checks
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: quality-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  quality:
+    name: Static and state-machine checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4, verified at review
+        with:
+          persist-credentials: false
+      - name: Check browser-script syntax
+        run: for file in assets/*.js; do node --check "$file"; done
+      - name: Whole-site structure and privacy boundaries
+        run: python3 scripts/check-quality.py
+      - name: Existing feature regression tests
+        run: |
+          node scripts/check-site.cjs
+          node scripts/check-reflections.cjs
+          node scripts/check-daily.cjs
+          node scripts/check-photos.cjs
+          node scripts/check-woo-deck.cjs
+      - name: Note storage and analytics regression tests
+        run: |
+          node scripts/check-gratitude.cjs
+          node scripts/check-privacy.cjs

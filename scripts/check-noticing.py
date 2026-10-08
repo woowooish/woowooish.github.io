@@ -44,7 +44,11 @@ def inline_styles(match):
         return 'url("' + data_url((path.parent / value).resolve()) + '")'
     style = re.sub(r'url\(([^)]+)\)', font_url, style)
     return '<style>' + style + '</style>'
-test_html = re.sub(r'<link rel="stylesheet" href="([^"]+)">', inline_styles, html)
+# The production policy is verified separately; test instrumentation inlines assets and needs evaluable scripts.
+fixture_html = re.sub(r'<meta http-equiv="Content-Security-Policy"[^>]*>', '', html)
+test_html = re.sub(r'<link rel="stylesheet" href="([^"]+)">', inline_styles, fixture_html)
+# Inline fixtures cannot inherit the production origin; policy has a separate test.
+test_html = re.sub(r'<meta http-equiv="Content-Security-Policy"[^>]*>', '', test_html)
 test_html = re.sub(r'(<img[^>]+src=")([^"]+)(")', lambda m: m[1]+data_url(ROOT / m[2].lstrip('/'))+m[3], test_html)
 test_html = re.sub(r'<script src="/assets/noticing\.js(?:\?[^"]*)?" defer></script>', '', test_html)
 test_html = test_html.replace('</body>', '<script>'+js+'</script></body>')
