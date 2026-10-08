@@ -74,3 +74,4 @@ jobs:
         run: |
           node scripts/check-browser-runtime.cjs
           node scripts/check-legacy-runtime.cjs
+          node scripts/check-hardening-runtime.cjs
