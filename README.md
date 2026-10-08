@@ -1,14 +1,14 @@
 # WooWooish
 
-A static website for small pauses, ordinary wonder and reflection. GitHub Pages publishes `main` from the repository root at `https://woowooish.com`. Keep `CNAME` and `.nojekyll` intact. The visitor-facing site has no package-install or build requirement, user account, live AI call or application database.
+A static website for small pauses, ordinary wonder and reflection. GitHub Pages publishes `main` from the repository root at `https://woowooish.com`. Keep `CNAME` and `.nojekyll` intact. The visitor-facing site has no package-install or build requirement, user account, live AI call or server-side application database.
 
 ## Current experiences
 
 - `index.html`: the centered Find Your Woo homepage, four experience choices, written and timed pauses, reflections, Our Story and email-draft forms.
 - `explore.html`: a directory of the experiences.
-- `pick-your-woo.html`: 412 original reflections, drawn at click time. `assets/woo-library.js` holds permanent IDs; `assets/woo-deck.js` handles browser-local history and native Web Locks where available. All three covers use the same unseen pool. Preserve IDs and storage keys when editing.
+- `pick-your-woo.html`: 412 original reflections, drawn at click time. `assets/woo-library.js` holds permanent IDs; `assets/woo-deck.js` handles browser-local history and atomic browser transactions where available. All three covers use the same unseen pool. Preserve IDs and storage keys when editing.
 - `daily-woo.html`: the same daily reflection shown on the homepage. `assets/daily.js` selects one of 370 original entries in `assets/doses/*.json` according to the local calendar date. Ten collections contain 37 entries each. There is no public archive picker. A failed or stalled request gives a retry; the selected content is not an attributed quotation or endorsement.
-- `gratitude-jar.html`: browser-local notes, explicit removal confirmation, backup downloads, and read-only recovery when saved data is malformed. Keep the original `woowooish-gratitude-v1` storage format compatible.
+- `gratitude-jar.html`: browser-local notes, explicit removal confirmation, backup downloads, and read-only recovery when saved data is malformed. The JSON format remains compatible; `assets/atomic-store.js` imports old localStorage records into the browser-only IndexedDB database once. No server database is added.
 - `the-art-of-noticing/`: a long-form field guide with nine invitations and a page-only notebook. Its copy/download tools do not automatically save writing between visits.
 - `what-is-woo.html`: introductory writing and a page-only reflection chooser.
 - `privacy.html`, `404.html`, `preview.html`: data controls, branded recovery and a noindex layout preview.

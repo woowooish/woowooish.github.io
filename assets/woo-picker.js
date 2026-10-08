@@ -4,7 +4,7 @@
   const byId = id => document.getElementById(id);
   const status = byId('picker-status');
   if (!status) return;
-  if (!window.WooLibrary || !window.WooDeck) {
+  if (!window.WooLibrary || !window.WooDeck || !window.WooAtomic) {
     status.textContent = 'The card library could not load. Reload to try again, or enjoy the reflection below.';
     return;
   }
@@ -75,10 +75,13 @@
       byId('woo-title').focus({preventScroll: true});
       const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       result.scrollIntoView({block: 'nearest', behavior: reduce ? 'instant' : 'smooth'});
-    } catch (_) {
+    } catch (error) {
       busy = false;
       cards.forEach(card => { card.disabled = false; });
-      status.textContent = 'This pick could not be reserved. Please choose a card again.';
+      status.textContent = error && error.code === 'storage-unavailable'
+        ? 'Saved pick history could not be opened. Your earlier history is unchanged. Reload the page to retry, or enjoy the reflection below.'
+        : 'This pick could not be reserved. Please choose a card again.';
+      byId('fallback-woo').hidden = false;
     }
   }
   function wooText(entry) {

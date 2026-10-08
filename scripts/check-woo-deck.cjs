@@ -63,7 +63,7 @@ async function run() {
   const locks={request:(name,fn)=>{assert.equal(name,api.lockName);lockCalls++;const task=lockQueue.then(fn);lockQueue=task.catch(()=>{});return task;}};
   const shared=store(),a=api.create(entries,{...options(shared),locks}),b=api.create(entries,{...options(shared),locks});
   const across=await Promise.all(Array.from({length:200},(_,i)=>(i%2?a:b).next()));
-  check('Coordinated clients have 200 unique draws',lockCalls===200 && new Set(across.map(x=>x.entry.id)).size===200 && across.every(x=>x.coordinated));
+  check('Mocked lock clients have 200 unique draws without claiming native transaction safety',lockCalls===200 && new Set(across.map(x=>x.entry.id)).size===200 && across.every(x=>!x.coordinated));
   let draws=0;
   const rejected=api.create(entries,{...options(store()),locks:{request:()=>Promise.reject(Error('locks denied'))},random:()=>{draws++;return 0;}});
   await assert.rejects(rejected.next());check('Rejected lock does not bypass coordination and draw',draws===0);

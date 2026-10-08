@@ -95,6 +95,7 @@ async function main(){
     const routes=['/','/explore.html','/daily-woo.html','/what-is-woo.html','/pick-your-woo.html',
       '/gratitude-jar.html','/the-art-of-noticing/','/privacy.html','/404.html','/preview.html'];
     for(const route of routes){
+      if(route==='/gratitude-jar.html') await tab.eval("localStorage.setItem('woowooish-gratitude-v1',JSON.stringify([{id:'preexisting-note',text:'SYNTHETIC migrated note',date:'2026-01-01'}]))");
       await go(tab,route);
       check(route+': real document with CSP',await tab.eval(`!!document.querySelector('meta[http-equiv="Content-Security-Policy"]') && document.querySelectorAll('h1').length===1`));
       for(const width of [320,390,768,1440]){
@@ -107,7 +108,7 @@ async function main(){
       }
       if(route==='/')check('Contact handler initializes under CSP',await tab.eval("!document.querySelector('#contact-form [type=submit]').disabled"));
       if(route==='/pick-your-woo.html')check('Picker initializes under CSP',await tab.eval("!document.querySelector('#cards .card').disabled"));
-      if(route==='/gratitude-jar.html')check('Jar initializes under CSP',await tab.eval("!document.querySelector('#gratitude-form [type=submit]').disabled"));
+      if(route==='/gratitude-jar.html'){await tab.wait("document.getElementById('jar-loading').hidden",'jar ready');check('Jar initializes under CSP',await tab.eval("!document.querySelector('#gratitude-form [type=submit]').disabled"));}
       if(route==='/the-art-of-noticing/')check('Notebook initializes under CSP',await tab.eval("!document.getElementById('notebook-actions').hidden"));
       if(route==='/what-is-woo.html')check('What Is Woo initializes under CSP',await tab.eval("!document.getElementById('woo-reveal').disabled"));
     }
@@ -123,30 +124,42 @@ async function main(){
     check('Fallback form cannot send a network submission',hits.filter(x=>x.method!=='GET').length===beforePosts);
     // Two independent pages share the browser's real storage and lock manager.
     const other=await page();await go(tab,'/pick-your-woo.html');await go(other,'/pick-your-woo.html');
-    check('Native localStorage and Web Locks available',await tab.eval("isSecureContext && typeof navigator.locks.request==='function' && typeof localStorage.setItem==='function'"));
-    await tab.eval("localStorage.removeItem(WooDeck.storageKey)");
-    const draw="(async()=>{const deck=WooDeck.create(WooLibrary.entries);return Promise.all(Array.from({length:100},()=>deck.next().then(r=>r.entry.id)))})()";
+    check('Native IndexedDB, localStorage and Web Locks available',await tab.eval("isSecureContext && WooAtomic.supported && typeof navigator.locks.request==='function' && typeof localStorage.setItem==='function'"));
+    await tab.eval("localStorage.setItem(WooDeck.storageKey,JSON.stringify({schema:1,seen:WooLibrary.entries.slice(0,2).map(e=>e.id),today:[],day:'2026-01-01',last:WooLibrary.entries[1].id,cycles:0}))");
+    const draw="(async()=>{const deck=WooDeck.create(WooLibrary.entries,{crypto:null,random:()=>0});return Promise.all(Array.from({length:100},()=>deck.next().then(r=>r.entry.id)))})()";
     const results=await Promise.all([tab.eval(draw),other.eval(draw)]);
     check('200 native two-tab draws have no repeats',new Set(results.flat()).size===200);
     await go(tab,'/pick-your-woo.html');
-    check('Native history survives real navigation',await tab.eval("JSON.parse(localStorage.getItem(WooDeck.storageKey)).seen.length===200"));
+    check('Native history preserves migration plus 200 new draws after navigation',await tab.eval("WooAtomic.create(WooDeck.storageKey).run(raw=>({raw,value:JSON.parse(raw).seen.length})).then(r=>r.value===202)"));
+    check('Both pre-existing picks were excluded',results.flat().every(id=>!['original-01','original-02'].includes(id)));
+    check('Successful migration removes the exact superseded legacy copy',await tab.eval("localStorage.getItem(WooDeck.storageKey)===null"));
     await tab.eval("document.querySelector('#cards .card').click()");await tab.wait("!document.getElementById('result').hidden",'picker result');
     const first=await tab.eval("document.getElementById('result').dataset.wooId");
     await tab.eval("document.getElementById('again').click();document.querySelector('#cards .card').click()");
     await tab.wait(`!document.getElementById('result').hidden && document.getElementById('result').dataset.wooId!==${JSON.stringify(first)}`,'new same-day Woo');
     check('Repeated same-card selection gives a fresh Woo',true);
+    const second=await tab.eval("document.getElementById('result').dataset.wooId");
+    check('Production cryptographic random source is present',await tab.eval("typeof crypto.getRandomValues==='function'"));
+    const naturalDraw="(async()=>{const deck=WooDeck.create(WooLibrary.entries);return Promise.all(Array.from({length:100},()=>deck.next().then(r=>r.entry.id)))})()";
+    const natural=await Promise.all([tab.eval(naturalDraw),other.eval(naturalDraw)]);
+    check('200 additional production-RNG two-tab draws have no repeats',new Set([...results.flat(),first,second,...natural.flat()]).size===402);
+    check('All 404 prior and new reservations persist',await tab.eval("WooAtomic.create(WooDeck.storageKey).run(raw=>({raw,value:JSON.parse(raw).seen.length})).then(r=>r.value===404)"));
+
     await go(tab,'/gratitude-jar.html');await go(other,'/gratitude-jar.html');
-    await tab.eval("localStorage.removeItem(WooGratitude.key)");
-    const add="(async()=>{const store=WooGratitude.create();await Promise.all(Array.from({length:30},(_,i)=>store.add('SYNTHETIC note '+i)));return store.load().items.length})()";
+    check('Existing jar note migrated automatically',await tab.eval("WooAtomic.create(WooGratitude.key).run(raw=>({raw,value:JSON.parse(raw)})).then(r=>r.value.length===1&&r.value[0].id==='preexisting-note')"));
+    const add="(async()=>{const store=WooGratitude.create();await store.refresh();await Promise.all(Array.from({length:30},(_,i)=>store.add('SYNTHETIC note '+i)));return store.load().items.length})()";
     await Promise.all([tab.eval(add),other.eval(add)]);
-    check('60 native two-tab note additions are retained',await tab.eval("JSON.parse(localStorage.getItem(WooGratitude.key)).length===60"));
+    check('Existing note plus 60 native two-tab additions are retained',await tab.eval("WooAtomic.create(WooGratitude.key).run(raw=>({raw,value:JSON.parse(raw).length})).then(r=>r.value===61)"));
     await go(tab,'/gratitude-jar.html');
+    await tab.wait("document.querySelectorAll('#entries .entry').length===30",'jar asynchronous open');
     await tab.eval("document.querySelector('#entries .entry button').click()");
-    check('Removal confirmation keeps the existing note',await tab.eval("!document.getElementById('jar-confirm').hidden && JSON.parse(localStorage.getItem(WooGratitude.key)).length===60"));
+    check('Removal confirmation keeps the existing note',await tab.eval("!document.getElementById('jar-confirm').hidden && document.getElementById('count').textContent.startsWith('61 ')"));
     await tab.eval("document.getElementById('jar-keep').click()");
-    check('Cancel does not delete a note',await tab.eval("JSON.parse(localStorage.getItem(WooGratitude.key)).length===60"));
+    check('Cancel does not delete a note',await tab.eval("WooAtomic.create(WooGratitude.key).run(raw=>({raw,value:JSON.parse(raw).length})).then(r=>r.value===61)"));
+    check('An aborted browser transaction preserves saved notes',await tab.eval("WooAtomic.create(WooGratitude.key).run(()=>{throw new Error('SYNTHETIC abort')}).then(()=>false,()=>WooAtomic.create(WooGratitude.key).run(raw=>({raw,value:JSON.parse(raw).length})).then(r=>r.value===61))"));
     // Empty corrupt strings must be downloadable without altering browser storage.
-    await tab.eval("localStorage.setItem(WooGratitude.key,'')");await go(tab,'/gratitude-jar.html');
+    await tab.eval("WooAtomic.create(WooGratitude.key).run(()=>({raw:'',value:null}))");await go(tab,'/gratitude-jar.html');
+    await tab.wait("!document.getElementById('jar-tools').hidden",'corrupt jar open');
     check('Empty unreadable record remains exportable',await tab.eval("!document.getElementById('jar-export').disabled"));
     await tab.eval("document.getElementById('jar-export').click()");
     for(let n=0;n<100&&!fs.existsSync(path.join(downloads,'woowooish-gratitude-original.txt'));n++)await delay(50);
@@ -155,7 +168,7 @@ async function main(){
     for(let n=0;n<100&&!fs.existsSync(path.join(downloads,'woowooish-gratitude-recovery.json'));n++)await delay(50);
     const recovery=JSON.parse(fs.readFileSync(path.join(downloads,'woowooish-gratitude-recovery.json'),'utf8'));
     check('Recovery backup includes exact raw data and unsaved draft',recovery.originalStorage===''&&recovery.unsavedDraft==='SYNTHETIC recovery draft');
-    check('Recovery never overwrites stored original',await tab.eval("localStorage.getItem(WooGratitude.key)===''"));
+    check('Recovery never overwrites stored original',await tab.eval("WooAtomic.create(WooGratitude.key).run(raw=>({raw,value:raw})).then(r=>r.value==='')"));
     dailyMode='invalid';await go(tab,'/daily-woo.html');await tab.wait("!document.getElementById('daily-retry').hidden",'invalid data retry');
     check('Malformed daily content gives a usable retry',await tab.eval("!document.querySelector('#daily-today h3')"));
     dailyMode='normal';await tab.eval("document.getElementById('daily-retry').click()");await tab.wait("!!document.querySelector('#daily-today h3')",'retry recovers');check('Retry loads a valid reflection',true);
@@ -168,14 +181,14 @@ async function main(){
     check('Privacy preference synchronizes across native tabs',true);
     await go(tab,'/missing-audit-page');check('Branded 404 recovery works on an actual missing route',await tab.eval("document.querySelector('h1').textContent.includes('wandered off')"));
     check('No uncaught browser exceptions',runtimeErrors.length===0);
-    console.log(JSON.stringify({status:'PASS',checks:checks.length,nativeStorage:true,nativeWebLocks:true,productionCSP:true,externalRequests:'intercepted, never sent'},null,2));
-    if(process.env.GITHUB_STEP_SUMMARY)fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,`## Native browser audit\n${checks.length} checks passed with the production CSP intact, real localStorage, 200 two-tab Woo draws and 60 two-tab jar additions. No real analytics requests or private notes were used.\n`);
+    console.log(JSON.stringify({status:'PASS',checks:checks.length,nativeStorage:true,nativeWebLocks:true,nativeIndexedDB:true,productionCSP:true,externalRequests:'intercepted, never sent'},null,2));
+    if(process.env.GITHUB_STEP_SUMMARY)fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,`## Native browser audit\n${checks.length} checks passed with the production CSP intact, real IndexedDB transactions, 400 two-tab Woo draws and 60 two-tab jar additions. No real analytics requests or private notes were used.\n`);
   } finally {
     pages.forEach(p=>p.close());if(browser)browser.close();chrome.kill('SIGTERM');
     if(chrome.exitCode===null)await Promise.race([new Promise(resolve=>chrome.once('exit',resolve)),delay(1500)]);
     if(chrome.exitCode===null)chrome.kill('SIGKILL');
     server.closeAllConnections();await new Promise(resolve=>server.close(resolve));
-    fs.rmSync(work,{recursive:true,force:true});
+    try {fs.rmSync(work,{recursive:true,force:true,maxRetries:10,retryDelay:150});} catch (cleanupError) {console.warn('Temporary browser cleanup:',cleanupError.code);}
   }
 }
 main().catch(e=>{console.error(e.stack||e);process.exitCode=1;});

@@ -25,9 +25,10 @@
   <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/assets/woowooish-icon-180-20261006.png">
   <link rel="stylesheet" href="/assets/woo-picker.css?v=20261007-412">
-  <script src="/assets/woo-library.js?v=20261007-412" defer></script>
-  <script src="/assets/woo-deck.js?v=20261007-412" defer></script>
-  <script src="/assets/woo-picker.js?v=20261007-412" defer></script>
+  <script src="/assets/atomic-store.js?v=20261008-atomic-1" defer></script>
+<script src="/assets/woo-library.js?v=20261007-412" defer></script>
+  <script src="/assets/woo-deck.js?v=20261008-atomic-1" defer></script>
+  <script src="/assets/woo-picker.js?v=20261008-atomic-1" defer></script>
 
 <link rel="stylesheet" href="/assets/site-support.css?v=20261007-hardening-1">
 <script src="/assets/site-privacy.js?v=20261008-audit-1" defer></script>
@@ -77,7 +78,7 @@
       <p>When browser storage is available, we keep a list of the Woo IDs already drawn here. None repeats until the collection has been explored. “Pick another Woo” offers a fresh choice on the same day without forgetting earlier picks.</p>
       <p>After all 412 have been explored, a new round can begin, still excluding anything drawn today and the last pick. If you explore the entire collection in one local day, the picker pauses until the next day rather than showing a same-day repeat.</p>
       <p>The history stays in this browser, not an Annie account. It contains message IDs, a local calendar date and a round count, not your name or journal writing. This feature does not send that history to a server. Pageview analytics and your choices are explained in the <a href="/privacy.html">privacy notice</a>.</p>
-      <p>Different browsers or devices have separate histories. Clearing site data, a private session ending, or lost browser data can allow repeats. If storage is blocked, picks stay fresh in this open page only. For reliable simultaneous picks across tabs, browser support for Web Locks is also needed; otherwise use one tab.</p>
+      <p>Different browsers or devices have separate histories. Clearing site data, a private session ending, or lost browser data can allow repeats. If atomic storage cannot open, the picker pauses rather than risking your saved history. Older browsers without it can keep a single-tab history; when their storage is blocked, that history lasts only in this open page. For reliable simultaneous picks across tabs, browser support for atomic local transactions is needed; otherwise use one tab. Existing saved entries are moved automatically into the browser’s local database. Refresh older open tabs after a site update.</p>
       <p>These are original brand reflections, not personal predictions, quotations from Annie, or advice you must follow. Keep what is useful. Leave what is not.</p>
     </div>
   </details>

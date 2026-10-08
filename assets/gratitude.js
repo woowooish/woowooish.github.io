@@ -3,13 +3,13 @@
   'use strict';
   const get = id => document.getElementById(id);
   const needed = ['gratitude-form','thought','entries','glass','count','status','jar-storage','jar-export','jar-more','jar-confirm','jar-keep','jar-remove','jar-confirm-text','jar-tools','jar-loading'];
-  if (!window.WooGratitude || !needed.every(id => get(id))) return;
+  if (!window.WooGratitude || !window.WooAtomic || !needed.every(id => get(id))) return;
   const store = WooGratitude.create();
   const input = get('thought');
   const submit = get('gratitude-form').querySelector('[type="submit"]');
   if (!submit) return;
   const status = get('status');
-  let snapshot;
+  let snapshot = store.load();
   let shown = 30;
   let pending = null;
   let busy = false;
@@ -22,8 +22,10 @@
     snapshot = store.load();
     const notes = snapshot.items;
     get('count').textContent = notes.length + (notes.length === 1 ? ' moment' : ' moments') +
-      (snapshot.persistent ? ' saved in this browser.' : ' in this open visit, not saved across visits.');
-    get('jar-storage').textContent = snapshot.blocked
+      (snapshot.unavailable ? ' shown here; saved storage is temporarily unavailable.' : snapshot.persistent ? ' saved in this browser.' : ' in this open visit, not saved across visits.');
+    get('jar-storage').textContent = snapshot.unavailable
+      ? 'Saved notes could not be opened. They have not been erased. Copy your draft or download a backup of the notes shown here, then reload to retry.'
+      : snapshot.blocked
       ? 'Some saved data could not be read safely. Your original storage has not been changed. Download a backup before seeking help; adding and removing are paused.'
       : snapshot.persistent
         ? 'Notes are stored on this device, not in a website account. Keep a backup: browser data can be cleared. ' +
@@ -31,7 +33,7 @@
         : 'Browser storage is unavailable. Notes last only while this page stays open. Download a backup before leaving.';
     submit.disabled = busy || snapshot.blocked;
     get('jar-export').disabled = !notes.length && !input.value.trim() && snapshot.recovery === null;
-    get('jar-export').textContent = snapshot.blocked ? (input.value ? 'Download recovery backup' : 'Download original saved data') : 'Download a backup';
+    get('jar-export').textContent = snapshot.recovery !== null ? (input.value ? 'Download recovery backup' : 'Download original saved data') : 'Download a backup';
     const list = get('entries');
     list.replaceChildren();
     if (!notes.length) {
@@ -100,17 +102,18 @@
     catch (error) {status.textContent = describe(error);}
     finally {busy = false;get('jar-remove').disabled = false;get('jar-keep').disabled = false;cancelRemoval(true);render();}
   });
-  get('jar-export').addEventListener('click', () => {
-    const current = store.load();
-    const recoveryWithDraft = current.blocked && Boolean(input.value);
-    const raw = current.blocked ? (recoveryWithDraft ? JSON.stringify({format:'woowooish-gratitude-recovery-v1',
+  get('jar-export').addEventListener('click', async () => {
+    const current = await store.refresh();
+    const corrupt = current.blocked && current.recovery !== null;
+    const recoveryWithDraft = corrupt && Boolean(input.value);
+    const raw = corrupt ? (recoveryWithDraft ? JSON.stringify({format:'woowooish-gratitude-recovery-v1',
       originalStorage:current.recovery, readableNotes:current.items, unsavedDraft:input.value}, null, 2) : current.recovery) : JSON.stringify({format:'woowooish-gratitude-backup-v1',
       notes:current.items,unsavedDraft:input.value}, null, 2);
     if (typeof raw !== 'string') {status.textContent = 'There is no saved data to export yet.';return;}
     let url;
     try {
       url = URL.createObjectURL(new Blob([raw],{type:'application/json;charset=utf-8'}));
-      const link = document.createElement('a');link.href = url;link.download = recoveryWithDraft ? 'woowooish-gratitude-recovery.json' : current.blocked ? 'woowooish-gratitude-original.txt' : 'woowooish-gratitude-backup.json';
+      const link = document.createElement('a');link.href = url;link.download = recoveryWithDraft ? 'woowooish-gratitude-recovery.json' : corrupt ? 'woowooish-gratitude-original.txt' : 'woowooish-gratitude-backup.json';
       document.body.append(link);link.click();link.remove();
       status.textContent = 'Backup prepared. Check your downloads and keep this private file somewhere safe. Nothing was uploaded.';
     } catch (_) {status.textContent = 'A file could not be prepared. Select and copy your notes before leaving.';}
@@ -119,12 +122,19 @@
   get('jar-more').addEventListener('click', () => {shown += 30;render();status.textContent = 'Showing up to ' + shown + ' recent notes.';});
   input.addEventListener('input', () => {
     get('jar-export').disabled = !input.value.trim() && !snapshot.items.length && snapshot.recovery === null;
-    get('jar-export').textContent = snapshot.blocked ? (input.value ? 'Download recovery backup' : 'Download original saved data') : 'Download a backup';
+    get('jar-export').textContent = snapshot.recovery !== null ? (input.value ? 'Download recovery backup' : 'Download original saved data') : 'Download a backup';
   });
   window.addEventListener('storage', event => {
     if (event.key === WooGratitude.key || event.key === null) {cancelRemoval(false);render();status.textContent = 'The jar was refreshed after another tab changed browser storage. Your draft is unchanged.';}
   });
-  get('jar-tools').hidden = false;
-  get('jar-loading').hidden = true;
-  render();
+  async function refreshView() {
+    if (busy) return;
+    await store.refresh(); render();
+    get('jar-tools').hidden = false;
+    get('jar-loading').hidden = true;
+  }
+  if (window.WooAtomic && WooAtomic.supported) WooAtomic.subscribe(WooGratitude.key, refreshView);
+  window.addEventListener('pageshow', event => {if (event.persisted) refreshView();});
+  document.addEventListener('visibilitychange', () => {if (!document.hidden) refreshView();});
+  refreshView();
 })();

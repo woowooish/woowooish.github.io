@@ -26,6 +26,10 @@
   }
   function create(options = {}) {
     const storage = options.storage || (() => root.localStorage);
+    const atomic = !Object.prototype.hasOwnProperty.call(options, 'storage') && root.WooAtomic && root.WooAtomic.supported
+      ? root.WooAtomic.create(key) : null;
+    let transactionStorage = null;
+    let unavailable = Boolean(atomic);
     const locks = Object.prototype.hasOwnProperty.call(options, 'locks') ? options.locks : (root.navigator && root.navigator.locks);
     const now = options.now || (() => new Date());
     const makeId = options.makeId || (() => root.crypto && typeof root.crypto.randomUUID === 'function'
@@ -36,9 +40,9 @@
     let recovery = null;
     let blocked = false;
     function load() {
-      if (persistent) {
+      if (persistent && (!atomic || transactionStorage)) {
         let raw;
-        try { raw = storage().getItem(key); }
+        try { raw = (transactionStorage || storage()).getItem(key); }
         catch (_) { persistent = false; }
         if (persistent) {
           const checked = validate(raw);
@@ -47,8 +51,8 @@
           recovery = blocked ? raw : null;
         }
       }
-      return {items: memory.map(n => ({...n})), persistent, blocked, recovery,
-        coordinated: Boolean(locks && typeof locks.request === 'function'), maxNotes};
+      return {items: memory.map(n => ({...n})), persistent: persistent && !unavailable, blocked: blocked || unavailable, recovery, unavailable,
+        coordinated: Boolean(atomic), maxNotes};
     }
     function change(kind, value) {
       const task = queue.then(() => {
@@ -69,19 +73,41 @@
           const encoded = JSON.stringify(next);
           if (encoded.length > maxChars) throw error('full');
           if (persistent) {
-            try { storage().setItem(key, encoded); }
+            try { (transactionStorage || storage()).setItem(key, encoded); }
             catch (_) { throw error('write'); }
           }
           memory = next;
           return load();
         };
+        if (atomic) {
+          const previous = {memory, persistent, blocked, recovery, unavailable};
+          return atomic.run(raw => {
+            let nextRaw = raw;
+            transactionStorage = {getItem: () => nextRaw, setItem: (_, encoded) => {nextRaw = encoded;}};
+            unavailable = false; persistent = true;
+            try { const value = perform(); return {raw: nextRaw, value}; }
+            finally { transactionStorage = null; }
+          }).then(result => result.value).catch(reason => {
+            ({memory, persistent, blocked, recovery, unavailable} = previous);
+            throw reason;
+          });
+        }
         // Failed lock requests are not silently bypassed.
         return locks && typeof locks.request === 'function' ? locks.request(lockName, perform) : perform();
       });
       queue = task.catch(() => {});
       return task;
     }
-    return Object.freeze({load, add: text => change('add', text), remove: id => change('remove', id)});
+    async function refresh() {
+      if (!atomic) return load();
+      try {
+        const result = await atomic.run(raw => ({raw, value: validate(raw)}));
+        memory = result.value.items; blocked = result.value.blocked;
+        recovery = blocked ? result.raw : null; unavailable = false; persistent = true;
+      } catch (_) { unavailable = true; }
+      return load();
+    }
+    return Object.freeze({load, refresh, add: text => change('add', text), remove: id => change('remove', id)});
   }
   const api = Object.freeze({create, validate, key, lockName, maxNotes, maxChars});
   if (typeof module === 'object' && module.exports) module.exports = api;
