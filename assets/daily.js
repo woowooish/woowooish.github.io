@@ -80,9 +80,10 @@ if (typeof document !== 'undefined') (() => {
     }
   }
 
-  function renderDose(data, dose) {
+  function renderDose(data, dose, selected) {
     const note = makeElement('article', 'dose-note ww-daily-note');
     note.id = 'daily-current-dose';
+    note.setAttribute('data-reflection-key', 'd1-' + selected.slug + '-' + String(selected.entryIndex + 1).padStart(2, '0'));
 
     const thoughtSide = makeElement('div', 'dose-quote-side');
     thoughtSide.append(
@@ -174,7 +175,7 @@ if (typeof document !== 'undefined') (() => {
       // Also bounds response-body parsing and browsers without AbortController.
       const data = await Promise.race([load(), deadline]);
       if (serial !== requestSerial || key !== localDayKey(new Date())) return;
-      renderDose(data, data.doses[selected.entryIndex]);
+      renderDose(data, data.doses[selected.entryIndex], selected);
       status.textContent = '';
       renderedDay = key;
     } catch (_) {

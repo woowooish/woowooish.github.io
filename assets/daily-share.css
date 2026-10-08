@@ -33,3 +33,14 @@
 .ww-daily-share [hidden]{display:none!important}
 @media(max-width:560px){.ww-daily-share-body{grid-template-columns:minmax(0,1fr) 70px;gap:12px}.ww-daily-share-figure{order:2}.ww-daily-share-preview{width:70px}.ww-daily-share-size{font-size:11px}.ww-daily-share-actions{gap:8px}.ww-daily-share-actions .ww-daily-share-primary{flex:1 1 auto;padding-inline:12px}.ww-daily-share-formats span{padding-inline:12px}.ww-daily-share-formats input:checked+span{padding-inline:11px}}
 @media(prefers-reduced-motion:reduce){.ww-daily-share *{scroll-behavior:auto;transition:none}}
+
+/* Permanent links and optional phone transfer, shared across all reflection surfaces. */
+.ww-daily-share{text-align:left;font-family:'Bricolage Grotesque',Arial,sans-serif}
+.ww-daily-share-phone{margin-top:14px;border-top:1px solid #b6d7d2;padding-top:8px}
+.ww-daily-share-phone summary{font:600 14px/1.5 'Bricolage Grotesque',sans-serif;cursor:pointer;min-height:44px;padding:10px 0;box-sizing:border-box}
+.ww-daily-share-phone p{font:400 14px/1.6 'Bricolage Grotesque',sans-serif;max-width:58ch}
+.ww-daily-share-qr{display:block;width:270px;height:auto;max-width:100%;border:1px solid #b6d7d2;margin:16px 0;background:#fff;image-rendering:pixelated}
+.ww-daily-share-permalink{display:inline-block;padding:12px 0;min-height:44px;font:600 14px/1.5 'Bricolage Grotesque',sans-serif;text-decoration:underline;text-underline-offset:3px;overflow-wrap:anywhere}
+.ww-daily-share-link-manual{box-sizing:border-box;width:100%;margin-top:12px;padding:12px;font:400 16px/1.5 sans-serif;color:#052453;background:#fff;border:1px solid #59747c;border-radius:8px}
+#pick-sharing .ww-daily-share{padding:20px 16px}
+@media(max-width:560px){#pick-sharing .ww-daily-share-body{display:flex;flex-direction:column}#pick-sharing .ww-daily-share-figure{order:0;display:flex;align-items:center;gap:12px}#pick-sharing .ww-daily-share-preview{width:64px}#pick-sharing .ww-daily-share-controls{width:100%}}

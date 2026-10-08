@@ -31,8 +31,8 @@ const unbroken = 'a'.repeat(180);
 assert.equal(sharing.wrapLines(ctx, unbroken, 904).join(''), unbroken);
 for (const file of ['index.html', 'daily-woo.html']) {
   const html = fs.readFileSync(path.join(root, file), 'utf8');
-  assert.match(html, /daily-share\.js\?v=20261008-sharing-2/);
-  assert.match(html, /daily-share\.css\?v=20261008-sharing-2/);
+  assert.match(html, /daily-share\.js\?v=20261008-links-3/);
+  assert.match(html, /daily-share\.css\?v=20261008-links-3/);
 }
 const source = fs.readFileSync(path.join(root, 'assets/daily-share.js'), 'utf8');
 assert(!/\bfetch\s*\(|XMLHttpRequest|html2canvas|FB\.init|access_token|innerHTML\s*=/.test(source), 'No SDK, server request, token or HTML interpolation');

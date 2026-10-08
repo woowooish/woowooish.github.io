@@ -200,9 +200,84 @@ async function main(){
     await tab.eval('(()=>{HTMLCanvasElement.prototype.toBlob=window.__toBlob;})()');await click();
     await tab.wait("!!document.querySelector('#daily-image-save[href^=\"blob:\"]')",'retry recovers');
     check('Encoding retry recovers without posting or downloading',await tab.eval('__downloads===0'));
+    // Pick Your Woo and immutable public permalinks share the same UI, not a second engine.
+    await tab.send('Page.addScriptToEvaluateOnNewDocument',{source:`
+      window.__shared=[];window.__clipboard='';window.__denyClipboard=false;window.__shareMode='ok';
+      Object.defineProperty(navigator,'canShare',{configurable:true,value:data=>!!data.files?.length});
+      Object.defineProperty(navigator,'share',{configurable:true,value:data=>{
+        window.__shared.push({keys:Object.keys(data),type:data.files?.[0]?.type,size:data.files?.[0]?.size,active:navigator.userActivation.isActive,text:data.text});
+        return window.__shareMode==='abort' ? Promise.reject(new DOMException('cancel','AbortError')) : Promise.resolve();
+      }});
+      Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async text=>{if(window.__denyClipboard)throw Error('denied');window.__clipboard=text;}}});
+    `});
+    await go(tab,'/pick-your-woo.html');
+    check('Picker does not expose a shareable draw before selection',await tab.eval("document.getElementById('result').hidden && !document.querySelector('#pick-sharing .ww-daily-share')"));
+    await tab.eval("document.querySelector('#cards .card').click();true");
+    await tab.wait("!!document.querySelector('#pick-image-save[href^=\"blob:\"]')",'picker share image ready');
+    const pick=await tab.eval("({id:document.getElementById('result').dataset.wooId,title:document.getElementById('woo-title').textContent,body:document.getElementById('woo-message').textContent,question:WooLibrary.entries.find(e=>e.id===document.getElementById('result').dataset.wooId).question,url:document.querySelector('#pick-sharing .ww-daily-share-permalink').href})");
+    check('Picked Woo exposes a permanent content-specific URL',pick.url==='https://woowooish.com/reflection.html?woo=p1-'+pick.id);
+    await tab.send('Runtime.evaluate',{expression:"document.getElementById('pick-copy-link').click();true",userGesture:true});
+    await tab.wait('__clipboard.length>0','picker link copied');
+    check('Copy link copies the exact selected Woo',await tab.eval('__clipboard')===pick.url);
+    await tab.send('Runtime.evaluate',{expression:"document.getElementById('pick-instagram-share').click();true",userGesture:true});
+    await tab.wait("!document.getElementById('pick-instagram-share').disabled",'picker share finished');
+    check('Pick uses a prepared files-only PNG during activation',await tab.eval("__shared.at(-1).keys.join(',')==='files' && __shared.at(-1).type==='image/png' && __shared.at(-1).size>1000 && __shared.at(-1).active"));
+    await tab.eval("document.getElementById('pick-phone-transfer').open=true;true");
+    await tab.wait("!document.querySelector('#pick-phone-transfer canvas').hidden",'local QR visible');
+    check('QR opens only on request with its matching readable link',await tab.eval("document.querySelector('#pick-phone-transfer canvas').width===270 && document.querySelector('#pick-phone-transfer a').href==="+JSON.stringify(pick.url)));
+    await tab.eval("window.__denyClipboard=true;document.getElementById('pick-copy-link').click();true");
+    await tab.wait("!document.querySelector('#pick-sharing .ww-daily-share-link-manual').hidden",'manual link fallback');
+    check('Clipboard denial preserves the exact permalink for manual copying',await tab.eval("document.querySelector('#pick-sharing .ww-daily-share-link-manual').value")==pick.url);
+    for(const width of [320,390,768,1440]){
+      await tab.send('Emulation.setDeviceMetricsOverride',{width,height:920,deviceScaleFactor:1,mobile:false});
+      check('Picker share and QR fit '+width,await tab.eval('document.documentElement.scrollWidth<=innerWidth'));
+    }
+    check('All 824 Pick Story/Post layouts retain the full text',await tab.eval(`WooLibrary.entries.every(entry=>['story','post'].every(format=>{
+      const canvas=document.createElement('canvas'),content=WooLinks.fromPick(entry),fit=WooDailySharing.drawCard(canvas,content,'"Bricolage Grotesque", Arial, sans-serif',format);
+      const good=fit.startY+fit.height<=1022.001 && [[0,'title'],[1,'reflection'],[3,'question']].every(([i,k])=>fit.blocks[i].lines.join('').replace(/\\s/g,'')===content[k].replace(/\\s/g,''));
+      canvas.width=1;canvas.height=1;return good;
+    }))`));
+    const pickHistory=await tab.eval("WooAtomic.create(WooDeck.storageKey).run(raw=>({raw,value:raw})).then(r=>r.value)");
+    await tab.eval("localStorage.setItem('woowooish-gratitude-v1','SYNTHETIC private note sentinel');true");
+    await go(tab,pick.url.replace('https://woowooish.com',''));
+    await tab.wait("!document.getElementById('shared-reflection').hidden",'shared pick read');
+    check('Permanent link reopens the exact picked title, body and question',await tab.eval("JSON.stringify([document.getElementById('shared-title').textContent,document.getElementById('shared-body').textContent,document.getElementById('shared-question').textContent])")===JSON.stringify([pick.title,pick.body,pick.question]));
+    check('Reader loads no draw or private-note storage engine',await tab.eval("typeof WooDeck==='undefined' && typeof WooAtomic==='undefined' && typeof WooGratitude==='undefined'"));
+    await tab.wait("!!document.querySelector('#shared-image-save[href^=\"blob:\"]')",'recipient can reshare');
+    check('Recipient gets the same Story/Post sharing controls',await tab.eval("!!document.getElementById('shared-format-story') && !!document.getElementById('shared-format-post') && !document.getElementById('shared-copy-link').hidden"));
+    for(const width of [320,390,768,1440]){
+      await tab.send('Emulation.setDeviceMetricsOverride',{width,height:920,deviceScaleFactor:1,mobile:false});
+      check('Shared reader fits '+width,await tab.eval('document.documentElement.scrollWidth<=innerWidth'));
+    }
+    await go(tab,'/pick-your-woo.html');
+    check('Opening and resharing a link never consumes or resets pick history',pickHistory===await tab.eval("WooAtomic.create(WooDeck.storageKey).run(raw=>({raw,value:raw})).then(r=>r.value)"));
+    check('A private note never enters the shared content or changes',await tab.eval("localStorage.getItem('woowooish-gratitude-v1')==='SYNTHETIC private note sentinel'"));
+    await tab.eval("document.querySelector('#cards .card').click();true");
+    await tab.wait("!!document.querySelector('#pick-image-save[href^=\"blob:\"]')",'second draw ready');
+    check('Picking after opening a link still avoids the previous Woo',await tab.eval("document.getElementById('result').dataset.wooId")!==pick.id);
+    await tab.eval("window.__revoked=[];const originalRevoke=URL.revokeObjectURL.bind(URL);URL.revokeObjectURL=url=>{__revoked.push(url);originalRevoke(url)};window.__oldPickURL=document.getElementById('pick-image-save').href;document.getElementById('again').click();true");
+    check('Picking again discards the stale shared image and link',await tab.eval("__revoked.includes(__oldPickURL) && !document.querySelector('#pick-sharing .ww-daily-share')"));
+    for(const key of ['d1-buddha-01','d1-eckhart-tolle-37','d1-joe-hudson-37']){
+      const info=require('../assets/woo-links.js').parse(key),data=JSON.parse(fs.readFileSync(path.join(root,'assets/shared/v1',info.slug+'.json'))),dose=data.doses[info.index];
+      await go(tab,'/reflection.html?woo='+key);
+      await tab.wait("!document.getElementById('shared-reflection').hidden",'daily snapshot read');
+      check(key+': fixed daily reflection independent of current date',await tab.eval("JSON.stringify([document.getElementById('shared-title').textContent,document.getElementById('shared-body').textContent,document.getElementById('shared-question').textContent])")===JSON.stringify([dose.title,dose.reflection,dose.question]));
+    }
+    for(const query of ['', '?woo=p1-does-not-exist-01','?woo=d1-buddha-38','?woo=d1-../../private-01','?woo=p1-original-01&woo=p1-original-02','?woo=%3Cscript%3E']){
+      await go(tab,'/reflection.html'+query);
+      await tab.wait("!document.getElementById('shared-status').textContent.includes('Opening')",'invalid link handled');
+      check('Unknown or malformed link cannot substitute a random Woo: '+query,await tab.eval("document.getElementById('shared-reflection').hidden && !document.querySelector('#shared-sharing .ww-daily-share')"));
+    }
+    await go(tab,'/daily-woo.html');
+    await tab.wait("!!document.querySelector('#daily-image-save[href^=\"blob:\"]')",'daily permalink available');
+    const daily=await tab.eval("({url:document.querySelector('.ww-daily-share-permalink').href,title:document.querySelector('#daily-current-dose h3').textContent})");
+    await go(tab,daily.url.replace('https://woowooish.com',''));
+    await tab.wait("!document.getElementById('shared-reflection').hidden",'today link resolves');
+    check('Current Daily Dose link resolves to precisely its displayed reflection',await tab.eval("document.getElementById('shared-title').textContent")===daily.title);
+
     check('No uncaught browser exceptions',runtimeErrors.length===0);
-    console.log(JSON.stringify({status:'PASS',checks:checks.length,reflections:370,productionCSP:true,nativePNG:true,nativeInstagramApp:'not tested; share boundary simulated',externalRequests:'intercepted, never sent'},null,2));
-    if(process.env.GITHUB_STEP_SUMMARY)fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,`## Daily Dose image sharing\n${checks.length} native-browser checks passed. All 370 reflections fit both real canvas layouts; PNG downloads are 1080 x 1920 and 1080 x 1350. Both public pages retain production CSP. The native Instagram app is not available in CI; only that sharing boundary is simulated.\n`);
+    console.log(JSON.stringify({status:'PASS',checks:checks.length,reflections:782,permanentLinks:true,productionCSP:true,nativePNG:true,nativeInstagramApp:'not tested; share boundary simulated',externalRequests:'intercepted, never sent'},null,2));
+    if(process.env.GITHUB_STEP_SUMMARY)fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,`## Daily Dose image sharing\n${checks.length} native-browser checks passed. All 782 reflections fit both real canvas layouts; permanent links, read-only history and QR controls pass; PNG downloads are 1080 x 1920 and 1080 x 1350. Both public pages retain production CSP. The native Instagram app is not available in CI; only that sharing boundary is simulated.\n`);
   } finally {
     pages.forEach(p=>p.close());if(browser)browser.close();chrome.kill('SIGTERM');
     if(chrome.exitCode===null)await Promise.race([new Promise(resolve=>chrome.once('exit',resolve)),delay(1500)]);
