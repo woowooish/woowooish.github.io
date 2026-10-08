@@ -2,7 +2,7 @@
 (() => {
   'use strict';
   const get = id => document.getElementById(id);
-  const required = ['setting-controls', 'invitation-label', 'invitation-title', 'invitation-body', 'invitation-question', 'another-invitation', 'observed', 'felt', 'wondering', 'notebook-actions', 'copy-note', 'save-note', 'clear-note', 'note-status', 'manual-copy', 'copy-text', 'share-guide', 'share-status', 'share-fallback', 'share-url'];
+  const required = ['setting-controls', 'invitation-label', 'invitation-title', 'invitation-body', 'invitation-question', 'another-invitation', 'observed', 'felt', 'wondering', 'notebook-actions', 'copy-note', 'save-note', 'clear-note', 'note-status', 'manual-copy', 'copy-text', 'share-guide', 'share-status', 'share-fallback', 'share-url', 'carry-invitation', 'carried-prompt', 'carried-question-text', 'remove-prompt', 'clear-confirm', 'confirm-clear', 'cancel-clear', 'notebook'];
   if (!required.every(id => get(id))) return;
   const guideUrl = 'https://woowooish.com/the-art-of-noticing/';
   const invitations = {
@@ -48,8 +48,12 @@
 
   const fields = ['observed', 'felt', 'wondering'].map(get);
   let noteRevision = 0;
+  let carriedQuestion = '';
+  let clearRevision = null;
   function discardCopyPreview() {
     noteRevision += 1;
+    get('clear-confirm').hidden = true;
+    clearRevision = null;
     get('manual-copy').hidden = true;
     get('copy-text').value = '';
     get('note-status').textContent = '';
@@ -62,6 +66,7 @@
       return null;
     }
     return 'WOOWOOISH / ORDINARY WONDER\nA field note to myself\n\n' +
+      (carriedQuestion ? 'A QUESTION TO KEEP ME COMPANY\n' + carriedQuestion + '\n\n' : '') +
       'SOMETHING I NOTICED\n' + fields[0].value.trim() + '\n\n' +
       'WHAT IT BROUGHT UP\n' + fields[1].value.trim() + '\n\n' +
       'A QUESTION I AM LEAVING OPEN\n' + fields[2].value.trim() + '\n\n' +
@@ -118,12 +123,76 @@
       if (url) setTimeout(() => URL.revokeObjectURL(url), 1500);
     }
   });
-  get('clear-note').addEventListener('click', () => {
+  function carryQuestion(question) {
+    const text = question.trim();
+    if (!text) return;
+    discardCopyPreview();
+    carriedQuestion = text;
+    get('carried-question-text').textContent = text;
+    get('carried-prompt').hidden = false;
+    get('note-status').textContent = 'Question added above your note. Your writing is unchanged.';
+    get('notebook').scrollIntoView({block: 'start'});
+    fields[0].focus({preventScroll: true});
+  }
+  get('carry-invitation').addEventListener('click', () => carryQuestion(get('invitation-question').textContent));
+  for (const button of document.querySelectorAll('[data-reflect-note]')) {
+    button.addEventListener('click', () => {
+      const prompt = button.closest('details').querySelector('.carry-question');
+      const copy = prompt.cloneNode(true);
+      const label = copy.querySelector('strong');
+      if (label) label.remove();
+      carryQuestion(copy.textContent);
+    });
+    button.hidden = false;
+  }
+  get('remove-prompt').addEventListener('click', () => {
+    discardCopyPreview();
+    carriedQuestion = '';
+    get('carried-question-text').textContent = '';
+    get('carried-prompt').hidden = true;
+    get('note-status').textContent = 'Question removed. Your writing is unchanged.';
+    fields[0].focus({preventScroll: true});
+  });
+  function clearNote() {
     fields.forEach(field => { field.value = ''; });
+    carriedQuestion = '';
+    get('carried-question-text').textContent = '';
+    get('carried-prompt').hidden = true;
     discardCopyPreview();
     get('note-status').textContent = 'Fields cleared. Copies and downloaded files are unchanged.';
     fields[0].focus({preventScroll: true});
+  }
+  function cancelClear() {
+    get('clear-confirm').hidden = true;
+    clearRevision = null;
+    get('note-status').textContent = 'Your note is unchanged.';
+    get('clear-note').focus({preventScroll: true});
+  }
+  get('clear-note').addEventListener('click', () => {
+    if (!carriedQuestion && !fields.some(field => field.value.length)) { clearNote(); return; }
+    clearRevision = noteRevision;
+    get('clear-confirm').hidden = false;
+    get('cancel-clear').focus();
   });
+  get('cancel-clear').addEventListener('click', cancelClear);
+  get('confirm-clear').addEventListener('click', () => {
+    // Do not clear a note that changed after confirmation was requested.
+    if (clearRevision === null || clearRevision !== noteRevision) return;
+    clearNote();
+  });
+  get('clear-confirm').addEventListener('keydown', event => {
+    if (event.key === 'Escape') { event.preventDefault(); cancelClear(); }
+  });
+  function openLinkedFieldNote() {
+    const note = [...document.querySelectorAll('.field-notes > details[id]')]
+      .find(item => '#' + item.id === window.location.hash);
+    if (!note) return;
+    note.open = true;
+    note.querySelector('summary').focus({preventScroll: true});
+    note.scrollIntoView({block: 'start'});
+  }
+  window.addEventListener('hashchange', openLinkedFieldNote);
+  openLinkedFieldNote();
   get('share-guide').addEventListener('click', async () => {
     const button = get('share-guide');
     button.disabled = true;
@@ -140,5 +209,5 @@
     }
   });
   // Expose controls only after all handlers have been installed successfully.
-  ['setting-controls', 'another-invitation', 'notebook-actions', 'share-guide'].forEach(id => { get(id).hidden = false; });
+  ['setting-controls', 'another-invitation', 'carry-invitation', 'notebook-actions', 'share-guide'].forEach(id => { get(id).hidden = false; });
 })();
