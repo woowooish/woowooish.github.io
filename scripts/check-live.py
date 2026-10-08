@@ -37,6 +37,8 @@ def main():
     paths = sorted(set(ROOT.glob('*.html')) | set((ROOT / 'the-art-of-noticing').glob('*.html')) |
                    set((ROOT / 'assets').glob('*.js')) | set((ROOT / 'assets').glob('*.css')) |
                    set((ROOT / 'assets/doses').glob('*.json')) |
+                   set((ROOT / 'assets/shared/v1').glob('*.json')) |
+                   set((ROOT / 'assets/shared/v1').glob('*.js')) |
                    {ROOT / 'robots.txt', ROOT / 'sitemap.xml'})
     failures = []
     records = []

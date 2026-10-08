@@ -1,0 +1,192 @@
+{
+  "teacher": "Buddha",
+  "source": "https://www.accesstoinsight.org/",
+  "sourceLabel": "Buddhist teachings",
+  "doses": [
+    {
+      "title": "Begin again",
+      "reflection": "A fresh moment does not ask you to erase the last one. Notice where you are and begin with the step available now.",
+      "question": "What is one gentle beginning you can make today?"
+    },
+    {
+      "title": "The second arrow",
+      "reflection": "Pain is difficult enough without adding a harsh story about having pain. Meet what hurts without blaming yourself for hurting.",
+      "question": "What extra judgment could you put down?"
+    },
+    {
+      "title": "Hands unclenched",
+      "reflection": "You can care deeply without gripping every outcome. Give your effort, then let the rest have room to unfold.",
+      "question": "Where could you loosen your hold a little?"
+    },
+    {
+      "title": "The changing sky",
+      "reflection": "A mood can feel like the whole world, yet moods move like weather. You do not have to make today's clouds permanent.",
+      "question": "What feeling might you allow to pass through?"
+    },
+    {
+      "title": "One mindful sip",
+      "reflection": "An ordinary drink can be a tiny return to presence. Feel its warmth or coolness before reaching for the next thing.",
+      "question": "Can you fully notice one sip today?"
+    },
+    {
+      "title": "Kindness goes inward",
+      "reflection": "Compassion isn't only something you offer others. The person living your life deserves some of it too.",
+      "question": "How could you be gentler with yourself today?"
+    },
+    {
+      "title": "No need to compare",
+      "reflection": "Someone else's pace does not measure your worth. Stay close to the life and practice unfolding in front of you.",
+      "question": "What comparison can you release for one day?"
+    },
+    {
+      "title": "Notice the craving",
+      "reflection": "Wanting something is human. Before chasing it, pause long enough to hear what you hope it will give you.",
+      "question": "What feeling are you hoping this desire will bring?"
+    },
+    {
+      "title": "The space before reaction",
+      "reflection": "You may not choose the first spark of irritation. You can still notice it before deciding what happens next.",
+      "question": "What would a mindful response look like here?"
+    },
+    {
+      "title": "Small acts of mercy",
+      "reflection": "A kind word at the right moment can change the texture of a day. The smallest gesture still counts.",
+      "question": "Who might welcome a little kindness from you?"
+    },
+    {
+      "title": "Nothing stays fixed",
+      "reflection": "Even a beautiful moment changes. That isn't a reason to hold it tighter; it's an invitation to really be here.",
+      "question": "What beauty is worth noticing while it lasts?"
+    },
+    {
+      "title": "The quiet path",
+      "reflection": "You do not need a dramatic breakthrough to grow. Repeated small choices shape the way you meet the world.",
+      "question": "What simple habit supports the person you're becoming?"
+    },
+    {
+      "title": "When anger visits",
+      "reflection": "Anger may carry information about a boundary or a hurt. Listen without letting it take the steering wheel.",
+      "question": "What is your anger asking you to protect?"
+    },
+    {
+      "title": "Enough for this breath",
+      "reflection": "A whole lifetime is too much to manage at once. One breath, one action, one moment is a kinder place to begin.",
+      "question": "What is enough to do right now?"
+    },
+    {
+      "title": "Meet the ordinary",
+      "reflection": "A walk, a meal, or folding laundry can become practice when you stop rushing past it.",
+      "question": "Which ordinary moment could receive your full attention?"
+    },
+    {
+      "title": "Compassion without agreement",
+      "reflection": "You can see another person's pain without approving of their behavior. Kindness and boundaries can live together.",
+      "question": "Where could you hold both compassion and clarity?"
+    },
+    {
+      "title": "Look with fresh eyes",
+      "reflection": "The mind loves familiar labels. Curiosity asks what you might see if you looked again.",
+      "question": "What are you assuming you already know?"
+    },
+    {
+      "title": "The generous moment",
+      "reflection": "Generosity is not measured only in money. Attention, patience, and an honest thank-you are gifts too.",
+      "question": "What could you give freely today?"
+    },
+    {
+      "title": "Let a thought be a thought",
+      "reflection": "Not every thought is a reliable narrator. You can notice its arrival without following every instruction.",
+      "question": "Which thought could you hold more lightly?"
+    },
+    {
+      "title": "Practice over perfection",
+      "reflection": "Being mindful does not mean never losing your patience. Noticing that you've wandered is part of returning.",
+      "question": "What would it feel like to begin again without shame?"
+    },
+    {
+      "title": "Rooted in the moment",
+      "reflection": "The past offers lessons and the future invites planning, but your next kind action happens here.",
+      "question": "What is yours to tend in this moment?"
+    },
+    {
+      "title": "Share the good",
+      "reflection": "Someone else's happiness does not subtract from your own. Celebrate a joy you did not have to create.",
+      "question": "Whose good news can you genuinely celebrate?"
+    },
+    {
+      "title": "Pause the verdict",
+      "reflection": "A difficult feeling doesn't need an immediate label of good or bad. Let it be known before it is judged.",
+      "question": "What changes when you describe rather than judge?"
+    },
+    {
+      "title": "Tenderness for strangers",
+      "reflection": "Every person you pass is carrying a life you cannot fully see. A little gentleness is rarely wasted.",
+      "question": "How might remembering that soften your day?"
+    },
+    {
+      "title": "A calm reply",
+      "reflection": "You can disagree without turning the conversation into a battle. A steady voice can leave room for truth.",
+      "question": "Where could you choose steadiness over winning?"
+    },
+    {
+      "title": "No trophy for suffering",
+      "reflection": "Struggle is not a contest and you needn't prove how much you can endure. Seeking support can be wise.",
+      "question": "Where could you let yourself receive help?"
+    },
+    {
+      "title": "The wisdom of enough",
+      "reflection": "More is not always the answer to a restless heart. Notice what is already supporting you.",
+      "question": "What feels sufficient in this moment?"
+    },
+    {
+      "title": "Sit with uncertainty",
+      "reflection": "Not knowing can be uncomfortable without being dangerous. Practice making a little room for an unfinished answer.",
+      "question": "What question can stay open today?"
+    },
+    {
+      "title": "The kindness of listening",
+      "reflection": "When you listen to understand rather than to reply, connection gets a little more space.",
+      "question": "Who deserves your undivided attention?"
+    },
+    {
+      "title": "Your body is here",
+      "reflection": "Notice the contact of your feet with the floor. Sometimes the simplest sensory detail helps you return.",
+      "question": "What do your feet feel right now?"
+    },
+    {
+      "title": "Gratitude without denial",
+      "reflection": "You can appreciate a small kindness while acknowledging that the day is hard. Both truths can belong.",
+      "question": "What small good thing exists alongside today's challenge?"
+    },
+    {
+      "title": "The shared human heart",
+      "reflection": "Everyone knows wanting, fear, love, and loss in their own way. Let shared humanity soften isolation.",
+      "question": "Where do you recognize yourself in someone else?"
+    },
+    {
+      "title": "The pause that matters",
+      "reflection": "Before sending the sharp message, stop long enough to ask what you truly want to communicate.",
+      "question": "What response would protect both honesty and care?"
+    },
+    {
+      "title": "Softness is strength",
+      "reflection": "Patience can ask more courage of you than a quick reaction. Quiet strength is still strength.",
+      "question": "Where might patience be your bravest choice?"
+    },
+    {
+      "title": "An open palm",
+      "reflection": "You cannot keep every version of your life. Make room for what is changing without declaring the old chapter wasted.",
+      "question": "What are you ready to release with gratitude?"
+    },
+    {
+      "title": "One kind intention",
+      "reflection": "You don't need to solve the entire world to contribute to it. Start with the person directly in front of you.",
+      "question": "What kindness is possible right where you are?"
+    },
+    {
+      "title": "Return to compassion",
+      "reflection": "When you notice yourself becoming hard, you can return without making that hardness your identity.",
+      "question": "How could you soften one small edge today?"
+    }
+  ]
+}

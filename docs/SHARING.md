@@ -1,44 +1,54 @@
-# Daily Dose sharing
+# Reflection sharing and permanent links
 
-## Visitor flow
+## Released surfaces
 
-Both Daily Dose locations use the same browser-only sharing module. The primary action comes before optional format choices. Story (1080 x 1920) is selected initially; Post (1080 x 1350) is one optional tap away. Both are prepared while the visitor reads. Switching between ready formats reuses cached PNGs, rather than making the visitor wait for another render. The selected format is remembered only in this open page, not in persistent storage.
+The same browser-only sharing renderer (`assets/daily-share.js`) now serves Daily Dose on the homepage and daily-woo.html, a revealed Pick Your Woo card, and the read-only reflection.html reader. Story (1080 x 1920) is the default; Post (1080 x 1350) is optional. Both PNGs are prepared before sharing. The card contains the complete reflection, question and WooWooish attribution, without private writing or portraits.
 
-When the browser reports file-sharing support, Share to Instagram sends only the prepared image to the native share menu. Instagram, a messaging app or another available target is the visitor's choice. The site cannot force Instagram to appear, select a Story/feed/message destination, or confirm publishing. Story sizing is not a native Story publishing integration.
+The primary action is Share to Instagram where native file sharing is available, or an explicit Save for Instagram download otherwise. Visitors still choose an app and confirm there. Story selects the image shape, not a destination inside Instagram. Copy caption and Send the words remain optional. Only an image is sent through the image share path; text sharing includes the permanent link.
 
-Without file sharing, the primary action is a real download link, Save for Instagram. There is no misleading share button that only reveals instructions. Saving immediately reveals the next step and an Open Instagram link. It never opens a new app automatically. iPhone Files/Photos and in-app-browser instructions stay in a disclosure until needed.
+## Permanent public links
 
-The preview remains visible and all content is already on the image. Copy caption is optional, never a prerequisite to sharing. Send the words uses a separate text-only native share payload with the full dated reflection, question and attribution, so a recipient gets the original words even though the canonical Daily Dose link changes each day. On browsers without native sharing, the duplicate text-sharing control is hidden; Copy caption still works, with a labelled selectable field when clipboard access fails.
+Every currently published reflection has a versioned key: 412 Pick Your Woo entries and 370 Daily Dose entries, 782 total. Examples:
 
-## Engineering boundaries
+- `https://woowooish.com/reflection.html?woo=p1-original-01`
+- `https://woowooish.com/reflection.html?woo=d1-buddha-01`
 
-- No SDK, plugin, login, token, backend, tracking event, new storage or image upload is added.
-- No Clipboard API call, image rendering, font wait or popup precedes the native share call inside the click handler. User activation is preserved.
-- Cancellation never downloads, copies, or launches an app. Errors do not claim success.
-- Both cached image URLs are revoked when Daily Dose changes. Detached asynchronous work cannot replace the new image or status.
-- Encoding is bounded and retryable. One failed size does not discard the other.
-- The entire original text is retained. The Story layout offsets important content away from top/bottom controls. Visitors still select the matching format in Instagram.
-- The Daily Dose selector and all 370 entries remain unchanged. Pick Your Woo, private notes, existing artwork, analytics preferences and production CSP are not modified.
+Copy link copies only the canonical public URL for the displayed reflection. It includes no browser history, personal notes, campaign parameters or visitor identifiers. Clipboard denial reveals a labelled selectable link rather than claiming success.
 
-## Checks
+The reader resolves these keys against frozen public content in `assets/shared/v1/`. These files are byte-for-byte copies of the published catalogs at introduction. Pick keys retain the existing permanent entry ID; Daily Dose keys name the teacher and fixed entry within the frozen collection. Neither depends on the recipient's date, time zone or random-number state. The reader uses neutral date wording rather than pretending an old Daily Dose is today's selection.
 
-Run `node scripts/check-daily-sharing.cjs` for source and full-library layout checks. Run `node scripts/check-daily-sharing-browser.cjs` with Node 22+ and Chrome/Chromium for real repository pages with production CSP. It checks both pages, 320/390/768/1440 widths, all 740 Story/Post canvas layouts, real downloads in both dimensions, supported and unsupported image sharing, text sharing, cancellation, clipboard denial, new-content invalidation and encoding retry. Only the OS/app share boundary is simulated. No social account is used.
+Opening a link is not a draw. The reader does not load the deck, atomic store or gratitude storage engine. It does not add the reflection to seen history, alter notes, or randomly substitute a different Woo. It offers separate links to start a new pick or read today's Daily Dose. Invalid, unknown, duplicated or incomplete keys show recovery; a failed Daily Dose snapshot request has a bounded retry. Late responses cannot replace the current requested reflection.
 
-A local environment that blocks loopback navigation cannot claim those native-page checks passed. Offline fixtures can supplement UI inspection, but production-CSP checks must run in the existing GitHub browser job. The main release workflow compares public HTML, JavaScript and CSS bytes to the release commit.
+The shared reader uses JavaScript to resolve the exact entry. Its HTML includes a truthful no-JavaScript fallback. Social link previews retain the portrait-free WooWooish brand card; this release does not claim per-reflection server-rendered thumbnails or automatically created Instagram posts.
 
-## Real-device acceptance, still required
+## Desktop-to-phone transfer
 
-On iPhone Safari and Android Chrome with Instagram installed, open the page from both the browser and the Instagram profile link. Test Story and Post, check which Instagram targets are offered, confirm the full image in the composer, cancel once, and test the explicit save fallback. Verify where downloads land and whether the help matches the installed versions. A real account owner decides whether to publish; testing the website does not authorize a test post.
+Open on your phone reveals a QR code for the same permanent URL plus a readable link. The QR is generated locally only when requested. It uses no QR service, redirect service, tracking link, login or upload. Scanning opens the same read-only reflection on the phone, where the same sharing controls are available. It does not open an Instagram composer automatically.
 
-## Future priorities, not part of this release
+`assets/woo-qr.js` is a small, purpose-limited QR Model 2 encoder: version 5, error correction L, byte mode, fixed mask 0, four-module quiet zone. It accepts only printable ASCII up to 106 bytes. All current canonical URLs fit. Golden matrices independently generated with Python qrcode are checked by the dependency-free Node suite. The local release review compared all 782 matrices to that reference and decoded ten rendered QR images with OpenCV, plus the actual browser-rendered picker QR. This is not a physical-camera test.
 
-The next consistent UX improvement is to reuse this approach for Pick Your Woo without altering its no-repeat draw logic. Content-specific permanent links would improve recipient continuity, especially before adding desktop-to-phone QR transfer. A canonical Instagram post per published Daily Dose could allow native resharing without file transfer, but should link to an actual matching post, never a fabricated or guessed Instagram URL. That publishing workflow needs separate account access and editorial approval.
+## Privacy, stability and maintenance
 
-Do not add a wall of social buttons, automatic clipboard writes, forced app launches, account connection requests, or a native mobile app merely to reduce one tap.
+No plugin, account connection, new storage, tracking event or server component is added. The existing analytics gate stays unchanged; reflection.html is not added to its reporting allowlist. Private notes are not a supported sharing source. Cancellation never copies, downloads or launches an app. Resetting Pick Your Woo disposes of both cached images, the permalink and QR. Pending work cannot write into the next card's panel.
+
+Never overwrite a published `assets/shared/v1/` file, recycle a key, or renumber archived Daily Dose entries. `scripts/shared-v1-manifest.json` pins their SHA-256 hashes. Contract checks also detect divergence between current writing and v1 so a future content edit requires an explicit new snapshot version and routing support. Keep old snapshots and their parser support. Domain and hosting continuity remain prerequisites for any permanent URL.
+
+The original card covers, all 412 live pick entries, all 370 live Daily Dose entries, no-repeat selection algorithms and private-note storage code are preserved. Daily Dose's renderer adds only the selected entry's permanent key; its date-selection function is unchanged.
+
+## Verification
+
+Run `node scripts/check-sharing-links.cjs` for all 782 links, frozen-catalog integrity, parser rejection cases, layout text retention and independent QR reference matrices. Run `node scripts/check-daily-sharing.cjs` for the original Daily Dose layout suite.
+
+`node scripts/check-daily-sharing-browser.cjs` exercises exact repository pages in native Chromium with production CSP, actual PNG downloads, file/text share payloads, cancellation, retries, both image shapes, all 1,564 layouts, permanent reader links, malformed-link recovery, QR controls, and no-repeat history preservation across a reader visit. It uses fresh synthetic browser profiles and intercepts external requests. Only the app/clipboard boundaries are simulated; no account is posted to. The optional `python scripts/check-woo-browser.py` retains all 412 real UI draws and 824 Pick image layout checks in an explicitly offline fixture.
+
+The local sandbox blocks navigation. Offline DOM/canvas checks supplement but do not replace the native GitHub browser job. Release checks include the frozen snapshot assets and compare public bytes with the exact release commit.
+
+## Remaining physical-device acceptance
+
+Test iPhone Safari and Android Chrome with Instagram installed, including links opened inside Instagram. Scan the QR with a phone, verify the same reflection, select Story and Post, inspect the complete image in the destination composer, cancel once and use the save fallback. Browsers cannot guarantee Instagram appears or confirm publishing. Only the account owner decides whether to post.
 
 ## Platform references
 
-- Web Share specification: https://www.w3.org/TR/web-share/
-- Browser sharing and activation: https://developer.mozilla.org/en-US/docs/Web/API/Navigator/share
-- Native Instagram Story integration: https://developers.facebook.com/documentation/instagram-platform/sharing-to-stories
-- Instagram professional-account publishing: https://developers.facebook.com/documentation/instagram-platform/content-publishing
+- Web Share API: https://www.w3.org/TR/web-share/
+- Browser sharing: https://developer.mozilla.org/en-US/docs/Web/API/Navigator/share
+- QR reference concepts: https://www.nayuki.io/page/qr-code-generator-library

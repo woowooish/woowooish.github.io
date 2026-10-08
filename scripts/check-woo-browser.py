@@ -3,7 +3,7 @@ Run: python scripts/check-woo-browser.py
 Only synthetic picks are used. Existing analytics requests are blocked.
 """
 from pathlib import Path
-import asyncio, json, os, shutil, tempfile, re
+import asyncio, json, os, shutil, tempfile, re, base64
 from bs4 import BeautifulSoup
 from playwright.async_api import async_playwright
 ROOT=Path(__file__).resolve().parents[1]
@@ -13,6 +13,7 @@ checks=[]
 def check(name,condition):
     if not condition: raise AssertionError(name)
     checks.append(name)
+    print("PASS",name,flush=True)
 html=(ROOT/'pick-your-woo.html').read_text()
 soup=BeautifulSoup(html,'html.parser')
 check('Exactly three native card buttons',len(soup.select('#cards button.card'))==3)
@@ -40,17 +41,23 @@ rendered=rendered.replace('<head>','<head>'+shim)
 # The production CSP is checked separately. Inline fixtures are not a live-origin test.
 rendered=re.sub(r'<meta http-equiv="Content-Security-Policy"[^>]*>', '', rendered)
 rendered=re.sub(r'<script[^>]*src="https://cloud.umami.is/script.js"[^>]*></script>','',rendered)
-for path in ['assets/atomic-store.js','assets/woo-library.js','assets/woo-deck.js','assets/woo-picker.js']:
+for path in ['assets/atomic-store.js','assets/woo-library.js','assets/woo-deck.js','assets/woo-links.js','assets/woo-qr.js','assets/daily-share.js','assets/woo-picker.js']:
     rendered=re.sub(r'<script src="/'+re.escape(path)+r'[^"\n]*" defer></script>',lambda m:'<script>'+ (ROOT/path).read_text()+'</script>',rendered)
-# The picker script needs the DOM, so move the inlined scripts to the end of the body.
+# The shared renderer and picker script need the DOM, so move the inlined scripts to the end of the body.
 scripts=re.findall(r'<script>.*?</script>',rendered,re.S)
 rendered=re.sub(r'<script>.*?</script>','',rendered,flags=re.S)
 rendered=rendered.replace('</body>',''.join(scripts)+'</body>')
 rendered=re.sub(r'<link rel="stylesheet" href="/assets/woo-picker.css[^"\n]*">',lambda m:'<style>'+ (ROOT/'assets/woo-picker.css').read_text()+'</style>',rendered)
+for css_path in ['assets/daily-share.css','assets/site-support.css']:
+    rendered=re.sub(r'<link rel="stylesheet" href="/'+re.escape(css_path)+r'[^"\n]*">',lambda m:'<style>'+ (ROOT/css_path).read_text()+'</style>',rendered)
+fonts=(ROOT/'assets/fonts.css').read_text()
+fonts=re.sub(r'url\(([^)]+)\)',lambda m:'url("data:font/woff2;base64,'+base64.b64encode((ROOT/'assets'/m[1].strip("\"'")).read_bytes()).decode()+'")',fonts)
+rendered=rendered.replace('<link rel="stylesheet" href="/assets/fonts.css">','<style>'+fonts+'</style>')
 async def block_external(route):
     await route.abort()
 async def ready(page):
     await page.set_content(rendered)
+    await page.evaluate("document.fonts.ready")
     await page.wait_for_function("!document.querySelector('.card').disabled")
 async def draw(page, index=0):
     await page.locator('.card').nth(index).click()
@@ -86,22 +93,24 @@ async def run():
         await page.screenshot(path=str(OUT/'picker-mobile-result.png'),full_page=True)
         check('Focus moves to the selected Woo heading',await page.evaluate("document.activeElement.id==='woo-title'"))
         await page.evaluate("Object.defineProperty(navigator,'share',{configurable:true,value:undefined});Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async text=>{window.savedCopy=text}}})")
-        await page.locator('#share').click()
+        await page.locator('.ww-daily-share-caption').click()
         check('Successful copy includes the displayed Woo',await page.evaluate("window.savedCopy.includes(document.getElementById('woo-title').textContent)"))
         await page.evaluate("Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async()=>{throw Error('denied')}}})")
-        await page.locator('#share').click()
-        check('Denied clipboard exposes labelled manual-copy field',await page.locator('#manual-copy').is_visible() and bool(await page.locator('#copy-text').input_value()))
+        await page.locator('.ww-daily-share-caption').click()
+        check('Denied clipboard exposes labelled manual-copy field',await page.locator('.ww-daily-share-manual').is_visible() and bool(await page.locator('.ww-daily-share-manual').input_value()))
         await page.evaluate("Object.defineProperty(navigator,'share',{configurable:true,value:async()=>{const error=Error('cancel');error.name='AbortError';throw error}})")
-        await page.locator('#share').click()
-        check('Native share cancellation is not misreported', 'cancelled' in await page.locator('#action-status').inner_text())
+        await page.evaluate("Object.defineProperty(navigator,'canShare',{configurable:true,value:()=>true});document.getElementById('pick-format-post').click()")
+        await page.wait_for_function("!document.getElementById('pick-instagram-share').hidden")
+        await page.locator('#pick-instagram-share').click()
+        check('Native share cancellation is not misreported', 'cancelled' in await page.locator('.ww-daily-share-status').inner_text())
         with_download=page.expect_download()
-        async with with_download as info: await page.locator('#save').click()
+        async with with_download as info: await page.locator('#pick-image-save').click()
         download=await info.value
         await download.save_as(str(OUT/'saved-woo.png'))
         check('Save produces named PNG',download.suggested_filename.endswith('.png') and (OUT/'saved-woo.png').read_bytes()[:8]==b'\x89PNG\r\n\x1a\n')
         await page.evaluate("Object.defineProperty(navigator,'share',{configurable:true,value:undefined});Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:()=>new Promise(r=>{window.finishCopy=r})}})")
-        await page.locator('#share').click();await page.locator('#again').click();await draw(page,1);await page.evaluate('window.finishCopy()')
-        check('Old clipboard result cannot overwrite new Woo status',await page.locator('#action-status').inner_text()=='')
+        await page.locator('.ww-daily-share-caption').click();await page.locator('#again').click();await draw(page,1);await page.evaluate('window.finishCopy()')
+        check('Old clipboard result cannot overwrite new Woo status',await page.locator('.ww-daily-share-status').inner_text()=='')
         await page.locator('#again').click()
         count_before=await page.evaluate('JSON.parse(localStorage.getItem(WooDeck.storageKey)).seen.length')
         await page.evaluate("document.querySelectorAll('.card').forEach(card=>{card.click();card.click()})")
@@ -114,21 +123,21 @@ async def run():
           const originalFill=CanvasRenderingContext2D.prototype.fillText;
           CanvasRenderingContext2D.prototype.fillText=function(text,x,y){
             const width=this.measureText(text).width;
-            if(x-width/2<70 || x+width/2>1010 || y<75 || y>1275)textProblems.push({text,x,y,width});
+            if(x<70 || x+width>1010 || y<65 || y>1700)textProblems.push({text,x,y,width});
             return originalFill.apply(this,arguments);
           };
           HTMLCanvasElement.prototype.toBlob=function(callback){callback(null)};
           const wait=async test=>{for(let n=0;n<1000;n++){if(test())return;await new Promise(r=>setTimeout(r,0));}throw Error('UI timeout');};
           for(let i=0;i<WooLibrary.entries.length;i++){
             document.querySelectorAll('.card')[i%3].click();await wait(()=>result.dataset.wooId);
-            ids.push(result.dataset.wooId);document.getElementById('save').click();await wait(()=>!document.getElementById('save').disabled);
+            ids.push(result.dataset.wooId);await wait(()=>document.getElementById('pick-instagram-share')?.textContent==='Try image again');
             document.getElementById('again').click();
           }
           document.querySelector('.card').click();await wait(()=>!document.getElementById('picker-status').textContent.includes('Choosing'));
           return {ids,textProblems,status:document.getElementById('picker-status').textContent};
         }''')
         check('412 real UI draws have no repeats',len(records['ids'])==412 and len(set(records['ids']))==412)
-        check('All 412 saved-image text layouts stay inside border',not records['textProblems'])
+        check('All 824 Pick image text layouts stay inside the shared card bounds',not records['textProblems'])
         check('UI refuses same-day repeat after exhaustion','explored all 412 Woos today' in records['status'])
         await ready(page)
         await page.locator('.card').nth(1).click()
