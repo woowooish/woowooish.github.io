@@ -1,5 +1,6 @@
 """Verify public Pages bytes for the checked-out release; read-only, no visitor data."""
 import hashlib
+import http.client
 import json
 import os
 from pathlib import Path
@@ -12,6 +13,7 @@ import urllib.request
 ROOT = Path(__file__).resolve().parents[1]
 ORIGIN = 'https://woowooish.com'
 HOSTS = {'woowooish.com', 'www.woowooish.com'}
+READ_ERRORS = (OSError, ValueError, RuntimeError, http.client.HTTPException)
 
 class SameSite(urllib.request.HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl):
@@ -42,6 +44,7 @@ def main():
     for attempt in range(1, 16):
         records = []
         failures = []
+        missing_route = False
         for path in paths:
             name = path.relative_to(ROOT).as_posix()
             try:
@@ -55,22 +58,30 @@ def main():
                     headers = {k.lower(): v for k, v in response_headers.items() if k.lower() in {
                         'content-security-policy', 'strict-transport-security', 'x-content-type-options',
                         'x-frame-options', 'permissions-policy', 'referrer-policy'}}
-            except (OSError, ValueError, RuntimeError) as error:
+            except READ_ERRORS as error:
                 failures.append({'path': name, 'reason': str(error)})
                 break  # Let deployment finish without repeatedly crawling unchanged files.
+        if not failures:
+            try:
+                try:
+                    fetch('/release-verification-missing-' + release + '.html', release)
+                except urllib.error.HTTPError as error:
+                    try:
+                        # A branded prefix alone is not proof of a complete response.
+                        # Exact bytes also detect truncated bounded reads, even when
+                        # HTTPResponse.read(size) returns short data without raising.
+                        missing_route = error.code == 404 and error.read(1024 * 1024) == (ROOT / '404.html').read_bytes()
+                    finally:
+                        error.close()
+                if not missing_route:
+                    raise RuntimeError('Branded HTTP 404 not confirmed')
+            except READ_ERRORS as error:
+                failures.append({'path': 'missing-route', 'reason': str(error)})
         if not failures:
             break
         print(json.dumps({'attempt': attempt, 'waiting_for_release': release, 'difference': failures[0]}), flush=True)
         if attempt < 15:
             time.sleep(15)
-    missing_route = False
-    if not failures:
-        try:
-            fetch('/release-verification-missing-' + release + '.html', release)
-        except urllib.error.HTTPError as error:
-            missing_route = error.code == 404 and b'WooWooish' in error.read(1024 * 1024)
-        if not missing_route:
-            failures.append({'path': 'missing-route', 'reason': 'Branded HTTP 404 not confirmed'})
     result = {'status': 'FAIL' if failures else 'PASS', 'commit': release, 'origin': ORIGIN,
               'verified_files': len(records), 'branded_404': missing_route,
               'observed_response_headers': headers, 'files': records, 'failures': failures}

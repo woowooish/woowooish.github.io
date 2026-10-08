@@ -115,8 +115,8 @@
     const recoveryWithDraft = corrupt && (Boolean(input.value) || current.legacyRecovery !== null);
     const raw = corrupt ? (recoveryWithDraft ? JSON.stringify({format:'woowooish-gratitude-recovery-v1',
       originalStorage:current.recovery, olderTabStorage:current.legacyRecovery, readableNotes:current.items, unsavedDraft:input.value}, null, 2) : current.recovery) : JSON.stringify({format:'woowooish-gratitude-backup-v1',
-      notes:current.items,unsavedDraft:input.value,storageUnavailable:current.unavailable,
-      olderTabStorageChecked:!current.legacyUnavailable}, null, 2);
+      notes:current.items,unsavedDraft:input.value,storageUnavailable:current.unavailable || !current.persistent,
+      olderTabStorageChecked:current.persistent && !current.unavailable && !current.legacyUnavailable}, null, 2);
     if (typeof raw !== 'string') {status.textContent = 'There is no saved data to export yet.';return;}
     let url;
     try {
