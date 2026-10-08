@@ -25,6 +25,8 @@
       (snapshot.unavailable ? ' shown here; saved storage is temporarily unavailable.' : snapshot.persistent ? ' saved in this browser.' : ' in this open visit, not saved across visits.');
     get('jar-storage').textContent = snapshot.unavailable
       ? 'Saved notes could not be opened. They have not been erased. Copy your draft or download a backup of the notes shown here, then reload to retry.'
+      : snapshot.legacyRecovery !== null
+      ? 'An older tab left data that needs attention. Both copies are unchanged. Download a recovery backup to keep them; adding and removing are paused.'
       : snapshot.blocked
       ? 'Some saved data could not be read safely. Your original storage has not been changed. Download a backup before seeking help; adding and removing are paused.'
       : snapshot.persistent
@@ -105,9 +107,9 @@
   get('jar-export').addEventListener('click', async () => {
     const current = await store.refresh();
     const corrupt = current.blocked && current.recovery !== null;
-    const recoveryWithDraft = corrupt && Boolean(input.value);
+    const recoveryWithDraft = corrupt && (Boolean(input.value) || current.legacyRecovery !== null);
     const raw = corrupt ? (recoveryWithDraft ? JSON.stringify({format:'woowooish-gratitude-recovery-v1',
-      originalStorage:current.recovery, readableNotes:current.items, unsavedDraft:input.value}, null, 2) : current.recovery) : JSON.stringify({format:'woowooish-gratitude-backup-v1',
+      originalStorage:current.recovery, olderTabStorage:current.legacyRecovery, readableNotes:current.items, unsavedDraft:input.value}, null, 2) : current.recovery) : JSON.stringify({format:'woowooish-gratitude-backup-v1',
       notes:current.items,unsavedDraft:input.value}, null, 2);
     if (typeof raw !== 'string') {status.textContent = 'There is no saved data to export yet.';return;}
     let url;
@@ -125,7 +127,7 @@
     get('jar-export').textContent = snapshot.recovery !== null ? (input.value ? 'Download recovery backup' : 'Download original saved data') : 'Download a backup';
   });
   window.addEventListener('storage', event => {
-    if (event.key === WooGratitude.key || event.key === null) {cancelRemoval(false);render();status.textContent = 'The jar was refreshed after another tab changed browser storage. Your draft is unchanged.';}
+    if (event.key === WooGratitude.key || event.key === null) {cancelRemoval(false);refreshView();status.textContent = 'The jar was refreshed after another tab changed browser storage. Your draft is unchanged.';}
   });
   async function refreshView() {
     if (busy) return;

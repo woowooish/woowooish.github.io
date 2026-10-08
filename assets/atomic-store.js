@@ -51,12 +51,50 @@
     attempt.catch(() => { if (opening === attempt) opening = null; });
     return attempt;
   }
+  function reconcile(key, current, legacy, knownIds) {
+    if (legacy === null || legacy === current) return {raw: current, recovery: null};
+    if (key === 'woowooish-gratitude-v1') {
+      const validate = root.WooGratitude && root.WooGratitude.validate;
+      if (!validate) return {raw: current, recovery: legacy};
+      const saved = validate(current), older = validate(legacy);
+      if (saved.blocked || older.blocked) return {raw: current, recovery: legacy};
+      const notes = saved.items.slice();
+      const present = new Map(notes.map(note => [note.id, note]));
+      for (const note of older.items) {
+        const existing = present.get(note.id);
+        // Same ID with different writing requires recovery, never a silent overwrite.
+        if (existing && (existing.text !== note.text || existing.date !== note.date)) return {raw: current, recovery: legacy};
+        if (!existing && !knownIds.has(note.id)) { notes.push(note); present.set(note.id, note); }
+      }
+      const raw = JSON.stringify(notes);
+      if (validate(raw).blocked) return {raw: current, recovery: legacy};
+      older.items.forEach(note => knownIds.add(note.id));
+      return {raw, recovery: null};
+    }
+    try {
+      const parse = raw => {
+        if (raw === null) return {schema:1, seen:[], today:[], day:'', last:null, cycles:0};
+        const value = JSON.parse(raw);
+        if (!value || value.schema !== 1 || !Array.isArray(value.seen) || !Array.isArray(value.today) || typeof value.day !== 'string' ||
+            value.seen.length > 100000 || value.today.length > 100000) throw failure('unreadable');
+        return value;
+      };
+      const saved = parse(current), older = parse(legacy);
+      const day = new Date();
+      const today = day.getFullYear()+'-'+String(day.getMonth()+1).padStart(2,'0')+'-'+String(day.getDate()).padStart(2,'0');
+      const ids = new Set((root.WooLibrary && root.WooLibrary.entries || []).map(entry => entry.id));
+      const clean = values => [...new Set(values.filter(id => ids.has(id)))];
+      return {raw: JSON.stringify({schema:1, seen:clean([...saved.seen,...older.seen]),
+        today:clean([...(saved.day === today ? saved.today : []),...(older.day === today ? older.today : [])]),
+        day:today, last:saved.last || older.last || null, cycles:Number.isSafeInteger(saved.cycles) ? saved.cycles : 0}), recovery:null};
+    } catch (_) { return {raw:current,recovery:legacy}; }
+  }
   function create(key) {
     if (!keys.has(key)) throw failure('invalid-key');
     async function run(operation) {
       const db = await open();
       return new Promise((resolve, reject) => {
-        let tx, raw, original, value, changed = false, imported = false, error;
+        let tx, raw, original, value, legacyRecovery = null, changed = false, consumedLegacy = false, error;
         let settled = false;
         const timer = setTimeout(() => {
           error = failure('storage-unavailable');
@@ -65,7 +103,7 @@
         function finish(reason) {
           if (settled) return;
           settled = true; clearTimeout(timer);
-          if (reason) reject(reason); else resolve({value, raw, persistent: true, coordinated: true});
+          if (reason) reject(reason); else resolve({value, raw, legacyRecovery, persistent: true, coordinated: true});
         }
         try {
           tx = db.transaction(storeName, 'readwrite');
@@ -73,9 +111,9 @@
           tx.onabort = () => finish(error || failure('write', tx.error));
           tx.onerror = () => { /* Aborting the transaction preserves the old value. */ };
           tx.oncomplete = () => {
-            // Remove only the exact old value that was successfully imported. Never
-            // erase a later write made by an old open tab during the upgrade.
-            if (imported && original !== null) {
+            // Remove only the exact legacy value successfully imported or reconciled.
+            // A write made later by an old tab remains available for the next read.
+            if (consumedLegacy && original !== null) {
               try { if (root.localStorage.getItem(key) === original) root.localStorage.removeItem(key); } catch (_) {}
             }
             if (changed && channel) { try { channel.postMessage(key); } catch (_) {} }
@@ -83,18 +121,41 @@
           };
           const request = objectStore.get(key);
           request.onsuccess = () => {
-            try {
-              imported = request.result === undefined;
-              // Import the existing exact JSON once, within the exclusive transaction.
-              original = imported ? root.localStorage.getItem(key) : request.result;
-              if (original !== null && typeof original !== 'string') throw failure('unreadable');
-              const result = operation(original);
-              if (!result || typeof result.then === 'function' ||
-                  (result.raw !== null && (typeof result.raw !== 'string' || (result.raw !== original && result.raw.length > 3 * 1024 * 1024)))) throw failure('invalid');
-              raw = result.raw; value = result.value;
-              changed = imported || raw !== original;
-              if (changed) objectStore.put(raw, key);
-            } catch (reason) { error = reason; tx.abort(); }
+            const stored = request.result;
+            const history = objectStore.get(key + ':legacy-ids.v1');
+            history.onsuccess = () => {
+              try {
+                original = root.localStorage.getItem(key);
+                const imported = stored === undefined;
+                let current = imported ? original : stored;
+                if (current !== null && typeof current !== 'string') throw failure('unreadable');
+                const metadata = history.result;
+                if (metadata !== undefined && (!Array.isArray(metadata) || metadata.length > 100000 || metadata.some(id => typeof id !== 'string'))) throw failure('unreadable');
+                const knownIds = new Set(metadata || []);
+                const observe = raw => {
+                  if (key !== 'woowooish-gratitude-v1' || !root.WooGratitude) return;
+                  const checked = root.WooGratitude.validate(raw);
+                  checked.items.forEach(note => knownIds.add(note.id));
+                };
+                observe(current);
+                if (!imported) {
+                  const merged = reconcile(key, current, original, knownIds);
+                  current = merged.raw; legacyRecovery = merged.recovery;
+                }
+                const result = operation(current, {legacyRecovery});
+                if (!result || typeof result.then === 'function' ||
+                    (result.raw !== null && (typeof result.raw !== 'string' || (result.raw !== current && result.raw.length > 3 * 1024 * 1024)))) throw failure('invalid');
+                raw = result.raw; value = result.value;
+                // Remember IDs before and after changes so a stale older tab cannot
+                // resurrect a note deliberately removed by this version.
+                observe(raw);
+                if (knownIds.size > 100000) throw failure('full');
+                if (key === 'woowooish-gratitude-v1' && (metadata === undefined || knownIds.size !== metadata.length)) objectStore.put([...knownIds], key + ':legacy-ids.v1');
+                changed = imported || raw !== stored;
+                if (changed) objectStore.put(raw, key);
+                consumedLegacy = legacyRecovery === null && original !== null;
+              } catch (reason) { error = reason; tx.abort(); }
+            };
           };
         } catch (reason) { finish(failure('storage-unavailable', reason)); }
       });

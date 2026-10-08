@@ -91,7 +91,8 @@
     }
     function next() {
       const task = queue.then(() => {
-        if (atomic) return atomic.run(raw => {
+        if (atomic) return atomic.run((raw, status) => {
+          if (status.legacyRecovery !== null) {const error = new Error('storage-unavailable'); error.code = 'storage-unavailable'; throw error;}
           let nextRaw = raw;
           const value = drawNow({getItem: () => raw, setItem: (_, encoded) => {nextRaw = encoded;}});
           value.persistent = true; value.coordinated = true;

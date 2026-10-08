@@ -38,3 +38,10 @@ The first native job failed because two tabs returned repeated Woos despite both
 The repair uses a single IndexedDB read/write transaction for each shared-state operation. This database remains entirely in the visitor’s browser. Existing compatible JSON is imported exactly once within a transaction; the old localStorage value is removed only after the import commits and only if it still matches the imported bytes. Malformed note strings remain recoverable. Failed transactions do not report success. Old open tabs should be refreshed. Browser-data controls must include IndexedDB. Older unsupported environments disclose single-tab limitations.
 
 The native assertions still require 400 unique concurrent picks (200 adversarial deterministic choices and 200 using the production random source), all prior picks excluded, survival across actual navigation, all simultaneous note additions retained, and exact recovery downloads. Test source was adapted to inspect the new authoritative store rather than an obsolete localStorage mirror. A temporary diagnostic wrapper is removed before the release. The final CI execution is recorded on the pull request.
+
+
+## Older-tab writes after migration
+
+A final review identified a remaining case: an older open tab could add a note to localStorage after a new tab had imported its earlier snapshot. The follow-up rechecks legacy storage inside every atomic transaction and merges new stable IDs, not merely on the first import. ID-only bookkeeping prevents a stale old snapshot from resurrecting notes removed by the current version. Conflicting or malformed copies are not overwritten; the jar exposes both copies and any current draft through a recovery backup, with editing paused. Legacy deletions are not propagated to newer notes. The full browser-store JSON and current content remain local to the browser.
+
+The separate native legacy-upgrade test exercises these cases with two real Chromium pages and real localStorage/IndexedDB, alongside the existing 85 native checks. Executed results and final deployment are recorded on the follow-up pull request.

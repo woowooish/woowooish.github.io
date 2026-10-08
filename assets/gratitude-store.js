@@ -38,6 +38,7 @@
     let persistent = true;
     let queue = Promise.resolve();
     let recovery = null;
+    let legacyRecovery = null;
     let blocked = false;
     function load() {
       if (persistent && (!atomic || transactionStorage)) {
@@ -51,7 +52,7 @@
           recovery = blocked ? raw : null;
         }
       }
-      return {items: memory.map(n => ({...n})), persistent: persistent && !unavailable, blocked: blocked || unavailable, recovery, unavailable,
+      return {items: memory.map(n => ({...n})), persistent: persistent && !unavailable, blocked: blocked || unavailable, recovery, legacyRecovery, unavailable,
         coordinated: Boolean(atomic), maxNotes};
     }
     function change(kind, value) {
@@ -80,15 +81,16 @@
           return load();
         };
         if (atomic) {
-          const previous = {memory, persistent, blocked, recovery, unavailable};
-          return atomic.run(raw => {
+          const previous = {memory, persistent, blocked, recovery, legacyRecovery, unavailable};
+          return atomic.run((raw, status) => {
+            if (status.legacyRecovery !== null) throw error('unreadable');
             let nextRaw = raw;
             transactionStorage = {getItem: () => nextRaw, setItem: (_, encoded) => {nextRaw = encoded;}};
             unavailable = false; persistent = true;
             try { const value = perform(); return {raw: nextRaw, value}; }
             finally { transactionStorage = null; }
           }).then(result => result.value).catch(reason => {
-            ({memory, persistent, blocked, recovery, unavailable} = previous);
+            ({memory, persistent, blocked, recovery, legacyRecovery, unavailable} = previous);
             throw reason;
           });
         }
@@ -102,7 +104,8 @@
       if (!atomic) return load();
       try {
         const result = await atomic.run(raw => ({raw, value: validate(raw)}));
-        memory = result.value.items; blocked = result.value.blocked;
+        memory = result.value.items; legacyRecovery = result.legacyRecovery;
+        blocked = result.value.blocked || legacyRecovery !== null;
         recovery = blocked ? result.raw : null; unavailable = false; persistent = true;
       } catch (_) { unavailable = true; }
       return load();
