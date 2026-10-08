@@ -109,6 +109,37 @@ async function main(){
     await legacy(jarKey,null);
   });
 
+  await scenario('Unproven older notes stay recoverable without resurrection',async()=>{
+    await legacy(jarKey,null);await go(current,'/pick-your-woo.html');
+    await current.eval("new Promise((ok,no)=>{const s=document.createElement('script');s.src='/assets/gratitude-store.js';s.onload=ok;s.onerror=()=>no(Error('Store fixture load failed'));document.head.append(s)})");
+    const saved=JSON.stringify([note('kept-before-bookkeeping')]);
+    const old=JSON.stringify([note('kept-before-bookkeeping'),note('removed-before-bookkeeping')]);
+    await raw(jarKey,saved);await legacy(jarKey,old);
+    for(let n=0;n<3;n++){
+      const state=await current.eval('WooGratitude.create().refresh()');
+      check('Unknown deletion provenance remains blocked on refresh '+n,state.blocked&&state.legacyRecovery===old&&state.items.length===1);
+    }
+    check('Recovery does not invent deletion provenance',(await readRaw(jarKey+':legacy-ids.v1'))===undefined);
+    check('Unproven removed note never changes the authoritative jar',(await readRaw(jarKey))===saved);
+    await openJar();const backup=await download('woowooish-gratitude-recovery.json');
+    check('Both pre-bookkeeping copies remain available in a real backup',backup.originalStorage===saved&&backup.olderTabStorage===old);
+    await legacy(jarKey,null);
+  });
+
+  await scenario('Malformed old pick history cannot disable healthy current picks',async()=>{
+    await go(current,'/pick-your-woo.html');const ids=await current.eval('WooLibrary.entries.map(e=>e.id)');
+    for(const damaged of ['{SYNTHETIC broken JSON',JSON.stringify({schema:99})]){
+      const saved=JSON.stringify({schema:1,cycles:2,seen:ids.slice(0,2),today:[],day:'2000-01-01',last:ids[1]});
+      await raw(wooKey,saved);await legacy(wooKey,damaged);
+      const outcome=await current.eval('WooDeck.create(WooLibrary.entries,{crypto:null,random:()=>0}).next()');
+      check('Usable authoritative picks survive an unreadable legacy format',outcome.entry.id===ids[2]&&outcome.legacyUnreadable===true);
+      check('Unreadable compatibility bytes are preserved',await older.eval(`localStorage.getItem(${JSON.stringify(wooKey)})===${JSON.stringify(damaged)}`));
+    }
+    await current.eval("document.querySelector('#cards .card').click()");await current.wait("!document.getElementById('result').hidden");
+    check('The picker explains unreadable older history without disabling choices',await current.eval("document.getElementById('picker-status').textContent.includes('Older-tab history was unreadable')"));
+    await legacy(wooKey,null);
+  });
+
   await scenario('Draft backups never overstate inaccessible storage',async()=>{
     for(const mode of ['fallback','first-atomic']){
       await raw(jarKey,undefined);

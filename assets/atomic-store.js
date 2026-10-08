@@ -51,7 +51,7 @@
     attempt.catch(() => { if (opening === attempt) opening = null; });
     return attempt;
   }
-  function reconcile(key, current, legacy, knownIds) {
+  function reconcile(key, current, legacy, knownIds, hasProvenance) {
     if (legacy === null || legacy === current) return {raw: current, recovery: null};
     if (key === 'woowooish-gratitude-v1') {
       const validate = root.WooGratitude && root.WooGratitude.validate;
@@ -64,7 +64,12 @@
         const existing = present.get(note.id);
         // Same ID with different writing requires recovery, never a silent overwrite.
         if (existing && (existing.text !== note.text || existing.date !== note.date)) return {raw: current, recovery: legacy};
-        if (!existing && !knownIds.has(note.id)) { notes.push(note); present.set(note.id, note); }
+        if (!existing && !knownIds.has(note.id)) {
+          // Before deletion bookkeeping existed, an absent ID might mean a
+          // deliberate removal, not a new note. Preserve both copies for recovery.
+          if (!hasProvenance) return {raw: current, recovery: legacy};
+          notes.push(note); present.set(note.id, note);
+        }
       }
       const raw = JSON.stringify(notes);
       if (validate(raw).blocked) return {raw: current, recovery: legacy};
@@ -150,7 +155,7 @@
                 };
                 observe(current);
                 if (!imported) {
-                  const merged = reconcile(key, current, original, knownIds);
+                  const merged = reconcile(key, current, original, knownIds, metadata !== undefined);
                   current = merged.raw; legacyRecovery = merged.recovery;
                 }
                 const result = operation(current, {legacyRecovery, legacyUnavailable});
@@ -161,7 +166,7 @@
                 // resurrect a note deliberately removed by this version.
                 observe(raw);
                 if (knownIds.size > 100000) throw failure('full');
-                if (key === 'woowooish-gratitude-v1' && (metadata === undefined || knownIds.size !== metadata.length)) objectStore.put([...knownIds], key + ':legacy-ids.v1');
+                if (key === 'woowooish-gratitude-v1' && legacyRecovery === null && (metadata === undefined || knownIds.size !== metadata.length)) objectStore.put([...knownIds], key + ':legacy-ids.v1');
                 changed = imported || raw !== stored;
                 if (changed) objectStore.put(raw, key);
               } catch (reason) { error = reason; tx.abort(); }
