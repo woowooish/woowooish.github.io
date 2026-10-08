@@ -74,19 +74,26 @@
     try {
       const parse = raw => {
         if (raw === null) return {schema:1, seen:[], today:[], day:'', last:null, cycles:0};
+        if (typeof raw !== 'string' || raw.length > 3 * 1024 * 1024) throw failure('unreadable');
         const value = JSON.parse(raw);
         if (!value || value.schema !== 1 || !Array.isArray(value.seen) || !Array.isArray(value.today) || typeof value.day !== 'string' ||
-            value.seen.length > 100000 || value.today.length > 100000) throw failure('unreadable');
-        return value;
+            value.day.length > 32 || value.seen.length > 100000 || value.today.length > 100000) throw failure('unreadable');
+        const cycles = value.cycles === undefined ? 0 : value.cycles;
+        if (!Number.isSafeInteger(cycles) || cycles < 0) throw failure('unreadable');
+        return {...value, cycles};
       };
       const saved = parse(current), older = parse(legacy);
       const day = new Date();
       const today = day.getFullYear()+'-'+String(day.getMonth()+1).padStart(2,'0')+'-'+String(day.getDate()).padStart(2,'0');
       const ids = new Set((root.WooLibrary && root.WooLibrary.entries || []).map(entry => entry.id));
       const clean = values => [...new Set(values.filter(id => ids.has(id)))];
-      return {raw: JSON.stringify({schema:1, seen:clean([...saved.seen,...older.seen]),
+      // Completed older rounds must not fill a newer round's unseen pool.
+      // Same-day exclusions are independent of rounds and are always combined.
+      const active = older.cycles > saved.cycles ? older : saved;
+      const seen = older.cycles === saved.cycles ? [...saved.seen,...older.seen] : active.seen;
+      return {raw: JSON.stringify({schema:1, seen:clean(seen),
         today:clean([...(saved.day === today ? saved.today : []),...(older.day === today ? older.today : [])]),
-        day:today, last:saved.last || older.last || null, cycles:Number.isSafeInteger(saved.cycles) ? saved.cycles : 0}), recovery:null};
+        day:today, last:ids.has(active.last) ? active.last : null, cycles:active.cycles}), recovery:null};
     } catch (_) { return {raw:current,recovery:legacy}; }
   }
   function create(key) {
@@ -94,7 +101,7 @@
     async function run(operation) {
       const db = await open();
       return new Promise((resolve, reject) => {
-        let tx, raw, original, value, legacyRecovery = null, changed = false, consumedLegacy = false, error;
+        let tx, raw, original, value, legacyRecovery = null, legacyUnavailable = false, changed = false, error;
         let settled = false;
         const timer = setTimeout(() => {
           error = failure('storage-unavailable');
@@ -103,7 +110,7 @@
         function finish(reason) {
           if (settled) return;
           settled = true; clearTimeout(timer);
-          if (reason) reject(reason); else resolve({value, raw, legacyRecovery, persistent: true, coordinated: true});
+          if (reason) reject(reason); else resolve({value, raw, legacyRecovery, legacyUnavailable, persistent: true, coordinated: true});
         }
         try {
           tx = db.transaction(storeName, 'readwrite');
@@ -111,11 +118,9 @@
           tx.onabort = () => finish(error || failure('write', tx.error));
           tx.onerror = () => { /* Aborting the transaction preserves the old value. */ };
           tx.oncomplete = () => {
-            // Remove only the exact legacy value successfully imported or reconciled.
-            // A write made later by an old tab remains available for the next read.
-            if (consumedLegacy && original !== null) {
-              try { if (root.localStorage.getItem(key) === original) root.localStorage.removeItem(key); } catch (_) {}
-            }
+            // Do not compare then delete localStorage: another tab can write
+            // between those calls. Retain compatibility snapshots; reconciliation
+            // and ID tombstones keep them from overwriting or resurrecting notes.
             if (changed && channel) { try { channel.postMessage(key); } catch (_) {} }
             finish();
           };
@@ -125,8 +130,14 @@
             const history = objectStore.get(key + ':legacy-ids.v1');
             history.onsuccess = () => {
               try {
-                original = root.localStorage.getItem(key);
                 const imported = stored === undefined;
+                try { original = root.localStorage.getItem(key); }
+                catch (reason) {
+                  // Never invent an empty first import, but keep an already
+                  // authoritative IndexedDB record usable if only legacy access fails.
+                  if (imported) throw failure('storage-unavailable', reason);
+                  original = null; legacyUnavailable = true;
+                }
                 let current = imported ? original : stored;
                 if (current !== null && typeof current !== 'string') throw failure('unreadable');
                 const metadata = history.result;
@@ -142,7 +153,7 @@
                   const merged = reconcile(key, current, original, knownIds);
                   current = merged.raw; legacyRecovery = merged.recovery;
                 }
-                const result = operation(current, {legacyRecovery});
+                const result = operation(current, {legacyRecovery, legacyUnavailable});
                 if (!result || typeof result.then === 'function' ||
                     (result.raw !== null && (typeof result.raw !== 'string' || (result.raw !== current && result.raw.length > 3 * 1024 * 1024)))) throw failure('invalid');
                 raw = result.raw; value = result.value;
@@ -153,7 +164,6 @@
                 if (key === 'woowooish-gratitude-v1' && (metadata === undefined || knownIds.size !== metadata.length)) objectStore.put([...knownIds], key + ':legacy-ids.v1');
                 changed = imported || raw !== stored;
                 if (changed) objectStore.put(raw, key);
-                consumedLegacy = legacyRecovery === null && original !== null;
               } catch (reason) { error = reason; tx.abort(); }
             };
           };

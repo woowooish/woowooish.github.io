@@ -40,6 +40,7 @@
       ? 'This browser remembers your picks. No repeats until the collection has been explored.'
       : 'Storage is unavailable. No repeats in this open page; reloading may bring earlier Woos back.';
     if (!outcome.coordinated) text += ' Use one tab for reliable repeat protection.';
+    if (outcome.legacyUnavailable) text += ' Older-tab history could not be checked. Refresh older tabs before picking there.';
     if (outcome.recovered) text = 'Your saved history was unreadable, so this pick starts a fresh history. ' + text;
     if (outcome.restarted) text = 'You explored the collection. A new round has begun, without repeating today’s picks. ' + text;
     return text;

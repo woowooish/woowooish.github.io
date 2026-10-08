@@ -88,7 +88,9 @@ async function main(){
   });
 
   await scenario('Legacy cleanup cannot erase a concurrent older-tab write',async()=>{
-    await legacy(jarKey,null);await openJar();await raw(jarKey,undefined);
+    await legacy(jarKey,null);await go(current,'/pick-your-woo.html');
+    await current.eval("new Promise((ok,no)=>{const s=document.createElement('script');s.src='/assets/gratitude-store.js';s.onload=ok;s.onerror=()=>no(Error('Store fixture load failed'));document.head.append(s)})");
+    await raw(jarKey,undefined);
     const before=JSON.stringify([note('before')]),late=JSON.stringify([note('before'),note('during-cleanup')]);
     await legacy(jarKey,before);
     // A deterministic interleaving of two synchronous Storage calls. The second
