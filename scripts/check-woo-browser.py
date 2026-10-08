@@ -40,7 +40,7 @@ rendered=rendered.replace('<head>','<head>'+shim)
 # The production CSP is checked separately. Inline fixtures are not a live-origin test.
 rendered=re.sub(r'<meta http-equiv="Content-Security-Policy"[^>]*>', '', rendered)
 rendered=re.sub(r'<script[^>]*src="https://cloud.umami.is/script.js"[^>]*></script>','',rendered)
-for path in ['assets/woo-library.js','assets/woo-deck.js','assets/woo-picker.js']:
+for path in ['assets/atomic-store.js','assets/woo-library.js','assets/woo-deck.js','assets/woo-picker.js']:
     rendered=re.sub(r'<script src="/'+re.escape(path)+r'[^"\n]*" defer></script>',lambda m:'<script>'+ (ROOT/path).read_text()+'</script>',rendered)
 # The picker script needs the DOM, so move the inlined scripts to the end of the body.
 scripts=re.findall(r'<script>.*?</script>',rendered,re.S)
