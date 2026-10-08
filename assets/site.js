@@ -72,7 +72,7 @@ async function copyDraft(formId) {
 }
 
 const newsletter = document.getElementById('newsletter-form');
-newsletter.addEventListener('submit', function (event) {
+if (newsletter) newsletter.addEventListener('submit', function (event) {
   event.preventDefault();
   if (!newsletter.reportValidity()) return;
   const email = newsletter.elements.namedItem('email').value.trim();
@@ -81,7 +81,7 @@ newsletter.addEventListener('submit', function (event) {
 });
 
 const contact = document.getElementById('contact-form');
-contact.addEventListener('submit', function (event) {
+if (contact) contact.addEventListener('submit', function (event) {
   event.preventDefault();
   if (!contact.reportValidity()) return;
   const name = contact.elements.namedItem('name').value.trim();
@@ -95,7 +95,7 @@ contact.addEventListener('submit', function (event) {
     message + '\n\nFrom: ' + name + '\nReply to: ' + email);
 });
 
-for (const form of [newsletter, contact]) {
+for (const form of [newsletter, contact].filter(Boolean)) {
   form.addEventListener('input', function () {
     clearDraft(form.id);
   });
@@ -105,6 +105,7 @@ for (const form of [newsletter, contact]) {
 
 for (const link of document.querySelectorAll('[data-interest]')) {
   link.addEventListener('click', function () {
+    if (!contact) return;
     const title = link.dataset.interest;
     contact.elements.namedItem('message').value = 'Aloha Annie! I like the idea of ' + title.toLowerCase() + '. Please keep me in mind when you are planning a gathering and let me know if there are any updates. Thank you!';
     clearDraft('contact-form');
@@ -190,4 +191,11 @@ if (pauseToggle && typeof WoowooishPause !== 'undefined') {
   });
   document.addEventListener('visibilitychange', render);
   render();
+}
+
+// Submit controls stay disabled in HTML until event handlers are ready.
+for (const form of [newsletter, contact].filter(Boolean)) {
+  if (typeof form.querySelectorAll === 'function') {
+    for (const button of form.querySelectorAll('[type="submit"]')) button.disabled = false;
+  }
 }

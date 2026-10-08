@@ -2,6 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cloud.umami.is; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://cloud.umami.is https://api-gateway.umami.dev; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Pick Your Woo | WooWooish</title>
   <meta name="description" content="Choose one of three cards from 412 gentle reflections. A fresh random pick on every selection, with a no-repeat history kept in this browser when storage is available.">
@@ -25,7 +28,9 @@
   <script src="/assets/woo-library.js?v=20261007-412" defer></script>
   <script src="/assets/woo-deck.js?v=20261007-412" defer></script>
   <script src="/assets/woo-picker.js?v=20261007-412" defer></script>
-  <script defer src="https://cloud.umami.is/script.js" data-website-id="77cbb298-6ccc-4ae1-b912-6e398efc6956"></script>
+
+<link rel="stylesheet" href="/assets/site-support.css?v=20261007-hardening-1">
+<script src="/assets/site-privacy.js?v=20261007-hardening-1" defer></script>
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to Pick Your Woo</a>
@@ -71,12 +76,12 @@
       <p>The three covers are invitations to choose, not three separate predictions. Each click draws at random from the same 412-Woo collection. The message is selected when you click, not when the page loads or when the date changes.</p>
       <p>When browser storage is available, we keep a list of the Woo IDs already drawn here. None repeats until the collection has been explored. “Pick another Woo” offers a fresh choice on the same day without forgetting earlier picks.</p>
       <p>After all 412 have been explored, a new round can begin, still excluding anything drawn today and the last pick. If you explore the entire collection in one local day, the picker pauses until the next day rather than showing a same-day repeat.</p>
-      <p>The history stays in this browser, not an Annie account. It contains message IDs, a local calendar date and a round count, not your name or journal writing. This feature does not send that history to a server. The site's existing page analytics are unchanged.</p>
+      <p>The history stays in this browser, not an Annie account. It contains message IDs, a local calendar date and a round count, not your name or journal writing. This feature does not send that history to a server. Pageview analytics and your choices are explained in the <a href="/privacy.html">privacy notice</a>.</p>
       <p>Different browsers or devices have separate histories. Clearing site data, a private session ending, or lost browser data can allow repeats. If storage is blocked, picks stay fresh in this open page only. For reliable simultaneous picks across tabs, browser support for Web Locks is also needed; otherwise use one tab.</p>
       <p>These are original brand reflections, not personal predictions, quotations from Annie, or advice you must follow. Keep what is useful. Leave what is not.</p>
     </div>
   </details>
   <footer>calm · peace · love<br><br>The Woo was within you all along. 🤍<a class="footer-link" href="/the-art-of-noticing/">Spend a little longer with The art of noticing ↗</a></footer>
 </main>
-</body>
+<footer class="site-support"><nav aria-label="Explore WooWooish"><a href="/">Home</a><a href="/what-is-woo.html">What Is Woo?</a><a href="/pick-your-woo.html" aria-current="page">Pick Your Woo</a><a href="/gratitude-jar.html">Gratitude Jar</a><a href="/the-art-of-noticing/">The art of noticing</a><a href="/privacy.html">Privacy & browser data</a></nav><p>Come as you are. Reflections are invitations, not predictions or professional care. Privacy choices are linked above.</p></footer></body>
 </html>

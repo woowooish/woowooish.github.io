@@ -23,12 +23,13 @@ for (const name of ['annie-beach-walk-clean', 'annie-sailing', 'annie-mountain-w
   assert.match(tag, /loading="lazy" decoding="async"/);
 }
 assert(total < 600000, 'Added photos exceed 600kB');
-assert(html.includes('assets/annie-beach.webp'), 'Keep the approved hero portrait');
+assert(html.includes('assets/annie-beach-walk-clean.webp'), 'Keep the approved Our Story portrait');
+assert(html.includes('id="annie"'), 'Keep the Our Story section');
 assert(html.includes('not a scheduled gathering'), 'Do not imply sailing is a scheduled event');
 assert(!html.includes('transform: scale(1.5)'), 'Remove the enlarged About crop');
 assert.match(css, /\.about-layout \{[^}]*grid-template-columns:repeat\(2,minmax\(0,1fr\)\);[^}]*align-items:stretch;/);
 assert.match(css, /\.about-photo img \{[^}]*position:absolute;[^}]*object-fit:cover;/);
 assert.match(css, /@media\(max-width:960px\) \{\s*\.about-layout \{grid-template-columns:1fr;\}\s*\.about-photo \{aspect-ratio:3\/4;\}/);
-assert(!css.includes('max-width:360px'), 'About photo should fill its equal-size desktop card');
+assert(!css.includes('.about-photo{max-width:360px'), 'About photo should fill its equal-size desktop card');
 assert(!css.includes('.about-photo {min-height:380px'));
-console.log(`Photo checks passed: three lazy-loaded, metadata-free WebP images (${total} bytes); equal-size desktop About cards, responsive portrait and unchanged hero.`);
+console.log(`Photo checks passed: three lazy-loaded, metadata-free WebP images (${total} bytes); equal-size desktop About cards, responsive portrait and preserved Our Story imagery.`);

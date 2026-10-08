@@ -1,6 +1,8 @@
 <!doctype html>
 <html lang="en"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cloud.umami.is; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://cloud.umami.is https://api-gateway.umami.dev; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>WooWooish | Find Your Woo</title>
 <meta name="description" content="Find your Woo. Pick a card, fill a gratitude jar, take a pause, and explore moments of calm, peace, and love.">
 <meta name="theme-color" content="#052453">
@@ -19,8 +21,10 @@
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="assets/woowooish-icon-180-20261006.png" sizes="180x180">
 <link rel="image_src" href="https://woowooish.com/assets/woowooish-share-20261006.png"><link rel="stylesheet" href="assets/fonts.css"><link rel="stylesheet" href="assets/site.css?v=20261007-370">
-<script src="assets/pause.js" defer></script><script src="assets/site.js" defer></script><script src="assets/daily.js?v=20261007-370" defer></script><script src="assets/reflections.js?v=20261005-daily-woo" defer></script>
-<script defer src="https://cloud.umami.is/script.js" data-website-id="77cbb298-6ccc-4ae1-b912-6e398efc6956"></script>
+<script src="assets/pause.js" defer></script><script src="assets/site.js?v=20261007-hardening-2" defer></script><script src="assets/daily.js?v=20261007-370" defer></script><script src="assets/reflections.js?v=20261005-daily-woo" defer></script>
+
+<link rel="stylesheet" href="/assets/site-support.css?v=20261007-hardening-2">
+<script src="/assets/site-privacy.js?v=20261007-hardening-2" defer></script>
 </head><body><a class="skip-link" href="#main-content">Skip to content</a><main id="main-content"><div style="display: flex; flex-direction: column; min-height: 100vh; overflow-x: hidden;"><section id="top" style="position: relative; background: oklch(0.27 0.11 252); color: oklch(0.985 0.008 220); padding: 20px clamp(16px, 4vw, 48px) 120px; overflow: hidden;">
   <div style="position: absolute; width: 900px; height: 900px; border-radius: 50%; right: -300px; top: -380px; background: oklch(0.34 0.13 245);"></div>
   <div style="position: absolute; width: 520px; height: 520px; border-radius: 50%; left: -220px; bottom: -240px; background: oklch(0.31 0.12 248);"></div>
@@ -225,10 +229,10 @@
   <h2 style="position: relative; margin: 0px; font-weight: 800; font-size: clamp(64px, 12vw, 180px); line-height: 0.82; letter-spacing: -0.055em;">Join the Tide</h2>
   <p style="position: relative; margin: 0px; max-width: 28em; font-size: 19px; line-height: 1.55; color: oklch(0.95 0.02 220);">Small reflections, simple practices and a little encouragement for ordinary days. Ask to hear from Annie when there’s something thoughtful to share.</p>
   
-    <form style="position: relative; display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; width: 100%; max-width: 560px; padding: 8px; border-radius: 999px; background: oklch(0.985 0.008 220);" class="newsletter-form" id="newsletter-form" aria-describedby="newsletter-form-help">
+    <form style="position: relative; display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; width: 100%; max-width: 560px; padding: 8px; border-radius: 999px; background: oklch(0.985 0.008 220);" class="newsletter-form" id="newsletter-form" method="post" action="/" aria-describedby="newsletter-form-help">
       <label class="sr-only" for="newsletter-form-email">Email address</label>
       <input required="" type="email" placeholder="your@email.com" style="flex: 1 1 200px; padding: 14px 20px; border-width: medium; border-style: none; border-color: currentcolor; border-image: none; border-radius: 999px; background: transparent; font-style: inherit; font-variant: inherit; font-weight: inherit; font-stretch: inherit; font-size: 17px; line-height: inherit; font-family: inherit; font-optical-sizing: inherit; font-size-adjust: inherit; font-kerning: inherit; font-feature-settings: inherit; font-variation-settings: inherit; font-language-override: inherit; color: oklch(0.27 0.11 252); outline: none;" id="newsletter-form-email" name="email" autocomplete="email" maxlength="254">
-      <button type="submit" style="padding: 16px 28px; border-radius: 999px; border-width: medium; border-style: none; border-color: currentcolor; border-image: none; background: oklch(0.27 0.11 252); color: oklch(0.985 0.008 220); font-style: inherit; font-variant: inherit; font-weight: 600; font-stretch: inherit; font-size: 17px; line-height: inherit; font-family: inherit; font-optical-sizing: inherit; font-size-adjust: inherit; font-kerning: inherit; font-feature-settings: inherit; font-variation-settings: inherit; font-language-override: inherit; cursor: pointer;">Ask to join 🌊</button>
+      <button type="submit" disabled style="padding: 16px 28px; border-radius: 999px; border-width: medium; border-style: none; border-color: currentcolor; border-image: none; background: oklch(0.27 0.11 252); color: oklch(0.985 0.008 220); font-style: inherit; font-variant: inherit; font-weight: 600; font-stretch: inherit; font-size: 17px; line-height: inherit; font-family: inherit; font-optical-sizing: inherit; font-size-adjust: inherit; font-kerning: inherit; font-feature-settings: inherit; font-variation-settings: inherit; font-language-override: inherit; cursor: pointer;">Ask to join 🌊</button>
     </form>
   
   <p id="newsletter-form-help" class="form-help">Prepare an email request to join the Tide interest list. Review and send it in your email app; this does not subscribe you automatically.</p><p id="newsletter-form-status" class="form-status" role="status" aria-live="polite"></p><a id="newsletter-form-draft" class="email-draft" hidden="" href="mailto:woowooish@gmail.com">Open email draft ↗</a><details class="draft-copy" id="newsletter-form-copy" hidden>
@@ -244,7 +248,7 @@
     <h2 style="margin: 0px; font-weight: 800; font-size: clamp(48px, 6vw, 88px); line-height: 0.9; letter-spacing: -0.045em;">Collabs, gatherings, <span style='font-family: "Space Mono", monospace; font-style: italic; font-weight: 400; color: oklch(0.55 0.15 240);'>or just hi.</span></h2>
   </div>
   
-  <form style="display: flex; flex-direction: column; gap: 12px;" class="contact-form" id="contact-form" aria-describedby="contact-form-help">
+  <form style="display: flex; flex-direction: column; gap: 12px;" class="contact-form" id="contact-form" method="post" action="/" aria-describedby="contact-form-help">
     <div class="form-field">
       <label for="contact-form-name">Name</label>
       <input required="" placeholder="Your name" style="padding: 18px 22px; border-radius: 999px; border: 1.5px solid oklch(0.85 0.05 215); background: oklch(0.985 0.008 220); font-style: inherit; font-variant: inherit; font-weight: inherit; font-stretch: inherit; font-size: 16px; line-height: inherit; font-family: inherit; font-optical-sizing: inherit; font-size-adjust: inherit; font-kerning: inherit; font-feature-settings: inherit; font-variation-settings: inherit; font-language-override: inherit;" id="contact-form-name" name="name" autocomplete="name" maxlength="100">
@@ -257,7 +261,7 @@
       <label for="contact-form-message">Message</label>
       <textarea rows="4" placeholder="What’s on your mind?" style="padding: 18px 22px; border-radius: 28px; border: 1.5px solid oklch(0.85 0.05 215); background: oklch(0.985 0.008 220); font-style: inherit; font-variant: inherit; font-weight: inherit; font-stretch: inherit; font-size: 16px; line-height: inherit; font-family: inherit; font-optical-sizing: inherit; font-size-adjust: inherit; font-kerning: inherit; font-feature-settings: inherit; font-variation-settings: inherit; font-language-override: inherit; resize: vertical;" id="contact-form-message" name="message" required="" maxlength="3000"></textarea>
     </div>
-    <button type="submit" style="align-self: start; padding: 16px 28px; border-radius: 999px; border-width: medium; border-style: none; border-color: currentcolor; border-image: none; background: oklch(0.27 0.11 252); color: oklch(0.985 0.008 220); font-style: inherit; font-variant: inherit; font-weight: 600; font-stretch: inherit; font-size: 16px; line-height: inherit; font-family: inherit; font-optical-sizing: inherit; font-size-adjust: inherit; font-kerning: inherit; font-feature-settings: inherit; font-variation-settings: inherit; font-language-override: inherit; cursor: pointer;">Prepare my message ↗</button>
+    <button type="submit" disabled style="align-self: start; padding: 16px 28px; border-radius: 999px; border-width: medium; border-style: none; border-color: currentcolor; border-image: none; background: oklch(0.27 0.11 252); color: oklch(0.985 0.008 220); font-style: inherit; font-variant: inherit; font-weight: 600; font-stretch: inherit; font-size: 16px; line-height: inherit; font-family: inherit; font-optical-sizing: inherit; font-size-adjust: inherit; font-kerning: inherit; font-feature-settings: inherit; font-variation-settings: inherit; font-language-override: inherit; cursor: pointer;">Prepare my message ↗</button>
   <p id="contact-form-help" class="form-help">This prepares a draft to Annie. Review and send it from your email app, or email woowooish@gmail.com directly.</p><p id="contact-form-status" class="form-status" role="status" aria-live="polite"></p><a id="contact-form-draft" class="email-draft" hidden="" href="mailto:woowooish@gmail.com">Open email draft ↗</a><details class="draft-copy" id="contact-form-copy" hidden>
       <summary>Use another email service</summary>
       <div class="draft-copy-content">
@@ -281,4 +285,5 @@
   </div>
   <p class="footer-note">Your details stay in your browser until you choose to send an email. No signup or payment is needed to enjoy the reflections and pause.</p><div style="font-weight: 800; font-size: clamp(72px, 19vw, 300px); line-height: 0.8; letter-spacing: -0.06em; color: oklch(0.82 0.1 205);" class="footer-wordmark">woowooish</div></footer></div></main>
 
+<footer class="site-support"><nav aria-label="Explore WooWooish"><a href="/">Home</a><a href="/explore.html">Explore the Woo</a><a href="/daily-woo.html">Daily Dose</a><a href="/what-is-woo.html">What Is Woo?</a><a href="/pick-your-woo.html">Pick Your Woo</a><a href="/gratitude-jar.html">Gratitude Jar</a><a href="/the-art-of-noticing/">The art of noticing</a><a href="/privacy.html">Privacy &amp; browser data</a></nav><p>Come as you are. Reflections are invitations, not predictions or professional care.</p></footer>
 </body></html>

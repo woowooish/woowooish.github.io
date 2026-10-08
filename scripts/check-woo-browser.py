@@ -35,7 +35,10 @@ Object.defineProperty(window,'localStorage',{configurable:true,get(){
 window.__wooLockQueue = Promise.resolve();
 Object.defineProperty(navigator,'locks',{configurable:true,value:{request:(name,fn)=>{const task=window.__wooLockQueue.then(fn);window.__wooLockQueue=task.catch(()=>{});return task}}});
 </script>"""
-rendered=html.replace('<head>','<head>'+shim)
+rendered=re.sub(r'<meta http-equiv="Content-Security-Policy"[^>]*>','',html)
+rendered=rendered.replace('<head>','<head>'+shim)
+# The production CSP is checked separately. Inline fixtures are not a live-origin test.
+rendered=re.sub(r'<meta http-equiv="Content-Security-Policy"[^>]*>', '', rendered)
 rendered=re.sub(r'<script[^>]*src="https://cloud.umami.is/script.js"[^>]*></script>','',rendered)
 for path in ['assets/woo-library.js','assets/woo-deck.js','assets/woo-picker.js']:
     rendered=re.sub(r'<script src="/'+re.escape(path)+r'[^"\n]*" defer></script>',lambda m:'<script>'+ (ROOT/path).read_text()+'</script>',rendered)
