@@ -1,0 +1,192 @@
+{
+  "teacher": "Bashar",
+  "source": "https://www.bashar.org/formula",
+  "sourceLabel": "Follow Your Excitement formula",
+  "doses": [
+    {
+      "title": "Follow the small spark",
+      "reflection": "Excitement does not have to be a grand calling. Notice a curious little pull and give it a practical next step.",
+      "question": "What small interest makes you feel more alive?"
+    },
+    {
+      "title": "Act without gripping",
+      "reflection": "Give a meaningful effort without making one outcome the only acceptable result. Curiosity leaves room for surprises.",
+      "question": "What can you try without insisting on a result?"
+    },
+    {
+      "title": "Permission to be you",
+      "reflection": "The way you experience wonder doesn't need to match anyone else's. Your interests are allowed to be unusual.",
+      "question": "What feels authentic even if it's not popular?"
+    },
+    {
+      "title": "Choose a different story",
+      "reflection": "A belief can be useful once and limiting later. Hold it up to the light before deciding it still belongs.",
+      "question": "Which belief deserves a second look?"
+    },
+    {
+      "title": "The curiosity compass",
+      "reflection": "When two options are available, consider which invites more honest curiosity rather than which looks more impressive.",
+      "question": "What would you explore if approval didn't matter?"
+    },
+    {
+      "title": "Joy without guarantees",
+      "reflection": "Doing something meaningful needn't promise an easy path. Let enjoyment matter alongside practical judgment.",
+      "question": "What would be worth trying even without certainty?"
+    },
+    {
+      "title": "Make the next move",
+      "reflection": "Big plans can stall under the weight of perfection. Take the smallest useful action you can actually complete.",
+      "question": "What is one doable next step?"
+    },
+    {
+      "title": "A playful experiment",
+      "reflection": "You can approach a routine differently just to see what happens. Discovery often starts with a small experiment.",
+      "question": "What could you try a new way?"
+    },
+    {
+      "title": "Drop the outcome script",
+      "reflection": "When you script every result, you can miss an unexpected gift. Prepare thoughtfully, then stay responsive.",
+      "question": "What surprise might you leave room for?"
+    },
+    {
+      "title": "Tune into delight",
+      "reflection": "Notice the activities that leave you energized rather than depleted. These signals can help guide how you spend time.",
+      "question": "What gave you energy this week?"
+    },
+    {
+      "title": "You are allowed to change",
+      "reflection": "A former dream may no longer fit. Changing direction can be honest rather than inconsistent.",
+      "question": "What old plan no longer feels like yours?"
+    },
+    {
+      "title": "The courage to begin",
+      "reflection": "Waiting until you feel completely ready can keep curiosity parked forever. Small starts are allowed to be imperfect.",
+      "question": "What can you begin as a beginner?"
+    },
+    {
+      "title": "Check the expectation",
+      "reflection": "A disappointing result may hurt more when you assume it should have gone only one way. Notice the expectation gently.",
+      "question": "What outcome are you gripping?"
+    },
+    {
+      "title": "Lighthearted ambition",
+      "reflection": "You can want something deeply while remembering there is more than one way to have a good life.",
+      "question": "Where could ambition become less heavy?"
+    },
+    {
+      "title": "The interesting detour",
+      "reflection": "A change of plans may reveal a possibility you couldn't have designed. Curiosity helps you notice it.",
+      "question": "What detour might be worth exploring?"
+    },
+    {
+      "title": "The choice in front of you",
+      "reflection": "You don't need the entire roadmap before choosing your next kind, honest action.",
+      "question": "Which option is available right now?"
+    },
+    {
+      "title": "Give passion a calendar slot",
+      "reflection": "An interest becomes part of your life when you make actual room for it. Start with a manageable amount of time.",
+      "question": "When could you spend ten minutes exploring?"
+    },
+    {
+      "title": "Be surprised by yourself",
+      "reflection": "You may have outgrown the way you describe yourself. Try something that doesn't fit the old label.",
+      "question": "What new side of you is emerging?"
+    },
+    {
+      "title": "No need for applause",
+      "reflection": "A quiet fascination is still valuable even when it cannot be monetized or explained to others.",
+      "question": "What do you love simply because you love it?"
+    },
+    {
+      "title": "Explore the possible",
+      "reflection": "Before saying a door is closed, ask whether another entrance exists. Imagination can expand the options you consider.",
+      "question": "What possibility have you ruled out too quickly?"
+    },
+    {
+      "title": "Let the response teach you",
+      "reflection": "You can take an action and learn from what happens without treating the result as a verdict on you.",
+      "question": "What did your last experiment teach you?"
+    },
+    {
+      "title": "Try a softer belief",
+      "reflection": "If an old belief leaves you stuck, test a kinder interpretation alongside the facts.",
+      "question": "What other explanation might be possible?"
+    },
+    {
+      "title": "The excitement of service",
+      "reflection": "Sometimes what lights you up also helps someone else. Notice where interest and contribution overlap.",
+      "question": "How could your curiosity benefit another person?"
+    },
+    {
+      "title": "Meet the unexpected",
+      "reflection": "An unplanned conversation can be an invitation to learn. You can stay open without abandoning your boundaries.",
+      "question": "What might you discover if you listened longer?"
+    },
+    {
+      "title": "Start where energy lives",
+      "reflection": "A tiny step taken with honest interest can create more momentum than forcing a grand plan.",
+      "question": "What small action actually appeals to you?"
+    },
+    {
+      "title": "Your version of magic",
+      "reflection": "Meaning doesn't have to look mystical. It might be the feeling of singing in the car or making something.",
+      "question": "Where does everyday magic show up for you?"
+    },
+    {
+      "title": "Question the should",
+      "reflection": "An inherited 'should' may hide your own preference. Notice which obligations are real and which are old habits.",
+      "question": "What would you choose without the automatic should?"
+    },
+    {
+      "title": "Keep both feet on the ground",
+      "reflection": "Wonder and practicality can be friends. Let imagination inspire you while your actions respect reality.",
+      "question": "What playful idea could you test safely?"
+    },
+    {
+      "title": "Curiosity over comparison",
+      "reflection": "Someone else's path may inspire without becoming your instructions. Find the version that fits you.",
+      "question": "What would your path look like without comparison?"
+    },
+    {
+      "title": "Be willing to update",
+      "reflection": "New information isn't an enemy of your beliefs. Growth includes changing your mind when evidence asks for it.",
+      "question": "What new information might you welcome?"
+    },
+    {
+      "title": "Follow a quiet yes",
+      "reflection": "Not every meaningful choice arrives with fireworks. Sometimes an honest yes feels calm and simple.",
+      "question": "What option brings a quiet sense of alignment?"
+    },
+    {
+      "title": "The fun of not knowing",
+      "reflection": "Uncertainty can be uncomfortable and also alive with possibility. Let a little wonder accompany it.",
+      "question": "What might you enjoy learning next?"
+    },
+    {
+      "title": "Let enthusiasm breathe",
+      "reflection": "A fun idea can lose its spark when turned into pressure. Give your curiosity room to play.",
+      "question": "Where have you made fun into a task?"
+    },
+    {
+      "title": "The adventure nearby",
+      "reflection": "You don't have to travel far to explore. A new neighborhood path or conversation can bring discovery.",
+      "question": "What nearby adventure could you choose?"
+    },
+    {
+      "title": "The meaning you make",
+      "reflection": "An event can invite many interpretations. Notice the one you choose and whether it helps you act well.",
+      "question": "What meaning supports a thoughtful response?"
+    },
+    {
+      "title": "Trust a modest beginning",
+      "reflection": "A small sincere action is more useful than an elaborate plan that never starts.",
+      "question": "What tiny beginning can you make today?"
+    },
+    {
+      "title": "Keep your wonder honest",
+      "reflection": "Stay open to mystery without feeling obliged to treat every intriguing idea as fact. Curiosity and discernment belong together.",
+      "question": "What can you enjoy exploring without needing to believe?"
+    }
+  ]
+}
