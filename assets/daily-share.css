@@ -1,0 +1,18 @@
+/* Scoped styles: the existing Daily Dose, photographs and site design stay intact. */
+.ww-daily-share{margin-top:24px;padding:24px clamp(16px,3vw,30px);border:1px solid #b6d7d2;border-radius:24px;background:#f1f8f5;color:#052453}
+.ww-daily-share h3{font:700 clamp(20px,3vw,25px)/1.25 'Bricolage Grotesque',sans-serif;margin:0 0 16px;letter-spacing:-.02em}
+.ww-daily-share-actions{display:flex;align-items:center;flex-wrap:wrap;gap:12px}
+.ww-daily-share-actions button,.ww-daily-share-actions a{display:inline-flex;align-items:center;justify-content:center;min-height:46px;box-sizing:border-box;padding:12px 20px;border:1px solid #052453;border-radius:999px;font:700 14px/1.35 'Bricolage Grotesque',sans-serif;text-decoration:none;cursor:pointer;background:transparent;color:#052453;text-align:center}
+.ww-daily-share-actions .ww-daily-share-primary{background:#052453;color:#fff}
+.ww-daily-share-actions :disabled{opacity:.65;cursor:wait}
+.ww-daily-share :focus-visible{outline:3px solid #176f86;outline-offset:4px}
+.ww-daily-share-help,.ww-daily-share-status,.ww-daily-share-details p{font:400 14px/1.6 'Bricolage Grotesque',sans-serif;max-width:68ch;margin:14px 0 0}
+.ww-daily-share-status:empty{display:none}
+.ww-daily-share-status{font-weight:600}
+.ww-daily-share-details{margin-top:16px}
+.ww-daily-share-details summary{font-size:14px;font-weight:700;cursor:pointer;padding:8px 0;min-height:28px}
+.ww-daily-share-preview{display:block;max-width:100%;width:324px;height:auto;margin-top:16px;border:1px solid #b6d7d2;border-radius:12px;-webkit-touch-callout:default;user-select:auto}
+.ww-daily-share-details .ww-daily-share-actions{margin-top:14px}
+.ww-daily-share-manual{display:block;box-sizing:border-box;width:100%;max-width:680px;margin-top:16px;padding:12px;border:1px solid #59747c;border-radius:8px;background:white;color:#052453;font:400 16px/1.5 sans-serif}
+.ww-daily-share [hidden]{display:none!important}
+@media(prefers-reduced-motion:reduce){.ww-daily-share *{scroll-behavior:auto;transition:none}}

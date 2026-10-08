@@ -17,10 +17,15 @@ for (const name of ['annie-beach-walk-clean', 'annie-sailing', 'annie-mountain-w
     offset += 8 + bytes.readUInt32LE(offset + 4) + (bytes.readUInt32LE(offset + 4) % 2);
   }
   assert(!chunks.some(chunk => ['EXIF', 'XMP ', 'ICCP'].includes(chunk)), `${file} has metadata`);
-  const tag = html.match(new RegExp(`<img[^>]+src="${file}"[^>]*>`))[0];
-  assert.match(tag, /alt="[^"]+"/);
-  assert.match(tag, /width="900" height="1200"/);
-  assert.match(tag, /loading="lazy" decoding="async"/);
+  const match = html.match(new RegExp(`<img[^>]+src="${file}"[^>]*>`));
+  if (name === 'annie-beach-walk-clean') {
+    assert(match, 'Keep the approved Our Story portrait');
+    assert.match(match[0], /alt="[^"]+"/);
+    assert.match(match[0], /width="900" height="1200"/);
+    assert.match(match[0], /loading="lazy" decoding="async"/);
+  } else {
+    assert.equal(match, null, 'Do not restore portraits the owner removed outside Our Story');
+  }
 }
 assert(total < 600000, 'Added photos exceed 600kB');
 assert(html.includes('assets/annie-beach-walk-clean.webp'), 'Keep the approved Our Story portrait');
@@ -32,4 +37,4 @@ assert.match(css, /\.about-photo img \{[^}]*position:absolute;[^}]*object-fit:co
 assert.match(css, /@media\(max-width:960px\) \{\s*\.about-layout \{grid-template-columns:1fr;\}\s*\.about-photo \{aspect-ratio:3\/4;\}/);
 assert(!css.includes('.about-photo{max-width:360px'), 'About photo should fill its equal-size desktop card');
 assert(!css.includes('.about-photo {min-height:380px'));
-console.log(`Photo checks passed: three lazy-loaded, metadata-free WebP images (${total} bytes); equal-size desktop About cards, responsive portrait and preserved Our Story imagery.`);
+console.log(`Photo checks passed: three metadata-free WebP assets, one visible lazy-loaded Our Story portrait (${total} bytes); equal-size desktop About cards, responsive portrait and preserved Our Story imagery.`);
