@@ -94,7 +94,7 @@ async function main(){
     const tab=await page();
     for(const route of ['/','/daily-woo.html']){
       await go(tab,route);
-      await tab.wait("!!document.querySelector('#daily-image-save[href^=\"blob:\"]') && !document.getElementById('daily-instagram-share').disabled",'PNG prepared before click');
+      await tab.wait("!!document.querySelector('#daily-image-save[href^=\"blob:\"]')",'PNG prepared before click');
       check(route+': image sharing ready under production CSP',true);
       for(const width of [320,390,768,1440]){
         await tab.send('Emulation.setDeviceMetricsOverride',{width,height:920,deviceScaleFactor:1,mobile:false});
@@ -105,22 +105,40 @@ async function main(){
       const data=JSON.parse(fs.readFileSync(path.join(root,'assets/doses',name),'utf8'));
       return data.doses.map(dose=>({...dose,teacher:data.teacher,date:'October 8, 2026'}));
     });
-    const fits=await tab.eval(`(${JSON.stringify(doses)}).every(dose=>{
+    const layouts=await tab.eval(`(()=>{
+      const doses=${JSON.stringify(doses)};
       const canvas=document.createElement('canvas');
-      const fitted=WooDailySharing.drawCard(canvas,dose,'"Bricolage Grotesque", Arial, sans-serif');
-      const ctx=canvas.getContext('2d');
-      return fitted.startY+fitted.height<=1022.001 && fitted.blocks.every(block=>{
-        ctx.font=block.font;return block.lines.every(line=>ctx.measureText(line).width<=904);
-      });
-    })`);
-    check('All 370 reflections fit a real brand-font canvas',doses.length===370 && fits);
+      let total=0;
+      for(const format of ['post','story']) for(const dose of doses){
+        const fit=WooDailySharing.drawCard(canvas,dose,'"Bricolage Grotesque", Arial, sans-serif',format);
+        const ctx=canvas.getContext('2d');
+        if(canvas.width!==1080 || canvas.height!==(format==='story'?1920:1350))return false;
+        if(fit.startY+fit.height>1022.001 || fit.offset!==(format==='story'?220:0))return false;
+        for(const block of fit.blocks){ctx.font=block.font;if(block.lines.some(line=>ctx.measureText(line).width>904))return false;}
+        total++;
+      }
+      canvas.width=1;canvas.height=1;return total;
+    })()`);
+    check('All 740 Story and Post layouts fit a real brand-font canvas with safe margins',layouts===740);
+    check('Story is selected and preview visible without opening help',await tab.eval("document.getElementById('daily-format-story').checked && !document.getElementById('daily-share-preview').hidden && !document.getElementById('daily-share-details').open"));
     const filename=await tab.eval("document.getElementById('daily-image-save').download");
     await tab.eval("document.getElementById('daily-image-save').click()");
     const destination=path.join(downloads,filename);
     for(let n=0;n<100&&!fs.existsSync(destination);n++)await delay(50);
     assert(fs.existsSync(destination),'actual download should reach disk');
     const image=fs.readFileSync(destination);
-    check('Saved file is a genuine 1080 x 1350 PNG',image.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])) && image.readUInt32BE(16)===1080 && image.readUInt32BE(20)===1350);
+    check('Saved Story is a genuine 1080 x 1920 PNG',image.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])) && image.readUInt32BE(16)===1080 && image.readUInt32BE(20)===1920);
+    check('Download reveals the next Instagram step immediately',await tab.eval("!document.querySelector('.ww-daily-share-next').hidden"));
+    // Format switches must use cached files, not repaint or ask the visitor to wait.
+    await tab.eval("document.getElementById('daily-format-post').click();true");
+    await tab.wait("document.getElementById('daily-image-save').download.endsWith('-post.png')",'cached post image');
+    const postName=await tab.eval("document.getElementById('daily-image-save').download");
+    await tab.eval("document.getElementById('daily-image-save').click();true");
+    const postPath=path.join(downloads,postName);
+    for(let n=0;n<100&&!fs.existsSync(postPath);n++)await delay(50);
+    const postBytes=fs.readFileSync(postPath);
+    check('One tap saves the alternate 1080 x 1350 Post PNG',postBytes.readUInt32BE(16)===1080 && postBytes.readUInt32BE(20)===1350);
+    await tab.eval("document.getElementById('daily-format-story').click();true");
     const click=()=>tab.send('Runtime.evaluate',{expression:"document.getElementById('daily-instagram-share').click();true",userGesture:true,returnByValue:true});
     // Only the operating-system/app boundary is simulated. Never post to a real account.
     await tab.eval(`(()=>{
@@ -128,30 +146,40 @@ async function main(){
       document.getElementById('daily-image-save').addEventListener('click',()=>window.__downloads++);
       Object.defineProperty(navigator,'canShare',{configurable:true,value:data=>data.files.length===1});
       Object.defineProperty(navigator,'share',{configurable:true,value:data=>{
-        window.__shareCalls.push({keys:Object.keys(data),length:data.files.length,type:data.files[0].type,size:data.files[0].size,active:navigator.userActivation.isActive});
+        window.__shareCalls.push({keys:Object.keys(data),text:data.text,length:data.files?.length,type:data.files?.[0]?.type,size:data.files?.[0]?.size,active:navigator.userActivation.isActive});
         if(window.__mode==='pending')return new Promise(resolve=>window.__finishShare=resolve);
         if(window.__mode==='abort')return Promise.reject(new DOMException('Cancelled','AbortError'));
         if(window.__mode==='denied')return Promise.reject(new DOMException('Blocked','NotAllowedError'));
         return Promise.resolve();
       }});
     })()`);
+    await tab.eval("document.getElementById('daily-format-post').click();document.getElementById('daily-format-story').click();true");
+    await tab.wait("!document.getElementById('daily-instagram-share').hidden && !document.getElementById('daily-instagram-share').disabled",'simulated file sharing ready');
     await click();await click();
     check('A double tap opens only one share operation',await tab.eval('__shareCalls.length===1 && document.getElementById("daily-instagram-share").disabled'));
     check('Single click sends only the prepared PNG with user activation',await tab.eval("__shareCalls[0].active && __shareCalls[0].keys.join(',')==='files' && __shareCalls[0].type==='image/png' && __shareCalls[0].size>1000 && __shareCalls[0].length===1"));
     await tab.eval('window.__finishShare()');await tab.wait('!document.getElementById("daily-instagram-share").disabled','share settled');
-    check('Completion does not claim an Instagram post was published',await tab.eval("document.querySelector('.ww-daily-share-status').textContent.includes('Finish in Instagram')"));
+    check('Completion does not claim an Instagram post was published',await tab.eval("document.querySelector('.ww-daily-share-status').textContent.includes('publishing is not confirmed')"));
     for(const mode of ['abort','denied']){
       await tab.eval('window.__mode='+JSON.stringify(mode));await click();
       await tab.wait('!document.getElementById("daily-instagram-share").disabled','failure settled');
       check(mode+': honest recovery and no automatic download',await tab.eval("__downloads===0 && document.querySelector('.ww-daily-share-status').textContent.includes("+JSON.stringify(mode==='abort'?'cancelled':'could not share')+")"));
     }
     await tab.eval("Object.defineProperty(navigator,'canShare',{configurable:true,value:()=>false});true");await click();
-    check('No file sharing support opens the save/help fallback',await tab.eval("document.getElementById('daily-share-details').open && __downloads===0"));
+    check('No file sharing support replaces the dead-end button with a primary download',await tab.eval("document.getElementById('daily-instagram-share').hidden && document.getElementById('daily-image-save').textContent==='Save for Instagram' && document.getElementById('daily-image-save').classList.contains('ww-daily-share-primary') && __downloads===0"));
     await tab.eval("Object.defineProperty(navigator,'canShare',{configurable:true,value:()=>{throw Error('unavailable')}});true");await click();
     check('Throwing capability detection remains recoverable',await tab.eval("!document.getElementById('daily-instagram-share').disabled"));
     await tab.eval("Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:()=>Promise.reject(Error('denied'))}});document.querySelector('.ww-daily-share-caption').click();true");
     await tab.wait("!document.querySelector('.ww-daily-share-manual').hidden",'manual caption');
     check('Clipboard denial preserves the whole caption for manual copy',await tab.eval("document.querySelector('.ww-daily-share-manual').value.includes(document.querySelector('.ww-daily-reflection').textContent)"));
+    await tab.eval("window.__mode='success';document.querySelector('.ww-daily-share-manual').hidden=true;true");
+    await tab.send('Runtime.evaluate',{expression:"document.querySelector('.ww-daily-share-send').click();true",userGesture:true,returnByValue:true});
+    await tab.wait('!document.querySelector(".ww-daily-share-send").disabled','text share settled');
+    check('Send the words hands over the full dated reflection, not an image or changing link alone',await tab.eval("__shareCalls.at(-1).keys.join(',')==='text' && __shareCalls.at(-1).text.includes(document.querySelector('.ww-daily-reflection').textContent) && __shareCalls.at(-1).text.includes(document.querySelector('.ww-daily-question').textContent) && __shareCalls.at(-1).active"));
+    await tab.eval("window.__mode='abort';true");
+    await tab.send('Runtime.evaluate',{expression:"document.querySelector('.ww-daily-share-send').click();true",userGesture:true,returnByValue:true});
+    await tab.wait('!document.querySelector(".ww-daily-share-send").disabled','text cancellation');
+    check('Text cancellation never copies or downloads anything',await tab.eval("document.querySelector('.ww-daily-share-manual').hidden && __downloads===0"));
     await tab.eval(`(()=>{
       window.__revoked=[];const revoke=URL.revokeObjectURL.bind(URL);
       URL.revokeObjectURL=url=>{window.__revoked.push(url);revoke(url)};
@@ -170,11 +198,11 @@ async function main(){
     await tab.wait("document.getElementById('daily-instagram-share').textContent==='Try image again'",'encoding failure');
     check('Failed image encoding gives a usable retry',await tab.eval("!document.getElementById('daily-instagram-share').disabled && document.getElementById('daily-image-save').hidden"));
     await tab.eval('(()=>{HTMLCanvasElement.prototype.toBlob=window.__toBlob;})()');await click();
-    await tab.wait("document.getElementById('daily-instagram-share').textContent==='Share to Instagram'",'retry recovers');
+    await tab.wait("!!document.querySelector('#daily-image-save[href^=\"blob:\"]')",'retry recovers');
     check('Encoding retry recovers without posting or downloading',await tab.eval('__downloads===0'));
     check('No uncaught browser exceptions',runtimeErrors.length===0);
     console.log(JSON.stringify({status:'PASS',checks:checks.length,reflections:370,productionCSP:true,nativePNG:true,nativeInstagramApp:'not tested; share boundary simulated',externalRequests:'intercepted, never sent'},null,2));
-    if(process.env.GITHUB_STEP_SUMMARY)fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,`## Daily Dose image sharing\n${checks.length} native-browser checks passed. All 370 reflections fit real canvas text; the PNG download is 1080 x 1350. Both public pages retain production CSP. The native Instagram app is not available in CI; only that sharing boundary is simulated.\n`);
+    if(process.env.GITHUB_STEP_SUMMARY)fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,`## Daily Dose image sharing\n${checks.length} native-browser checks passed. All 370 reflections fit both real canvas layouts; PNG downloads are 1080 x 1920 and 1080 x 1350. Both public pages retain production CSP. The native Instagram app is not available in CI; only that sharing boundary is simulated.\n`);
   } finally {
     pages.forEach(p=>p.close());if(browser)browser.close();chrome.kill('SIGTERM');
     if(chrome.exitCode===null)await Promise.race([new Promise(resolve=>chrome.once('exit',resolve)),delay(1500)]);

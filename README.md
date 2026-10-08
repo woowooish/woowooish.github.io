@@ -45,6 +45,6 @@ The optional Python browser suites require Playwright, BeautifulSoup and Chromiu
 
 The read-only Site quality checks workflow runs source/state and native-browser jobs. Confirm both pass before merging. The main-branch release job runs `python3 scripts/check-live.py` to compare public HTML, JavaScript, CSS, Daily Dose JSON, robots and sitemap bytes with the exact merge commit and verify the branded HTTP 404. Inspect its evidence, then smoke-test the public site. This workflow does not automatically protect `main` or make Pages wait for checks. Required reviews/status checks and hosting response headers are separate owner-level controls. Roll back with a reviewed revert, not a reset over another contributor's work.
 
-The separately prepared social-sharing upgrade is not part of the hardening releases unless an explicitly reviewed later change introduces it.
+Daily Dose sharing is now part of the site on both Daily Dose locations. `assets/daily-share.js` prepares Story and Post PNGs in the browser, offers native image sharing or a primary download according to capability, and provides optional full-text sharing and caption copying. No plugin, login, backend or tracking was added. See `docs/SHARING.md` for the flow, limits and real-device acceptance checklist.
 
 See `SECURITY.md` for private reporting, browser-storage limits and owner-level security controls. GitHub Actions dependency updates are proposed weekly for review, not automatically merged.
