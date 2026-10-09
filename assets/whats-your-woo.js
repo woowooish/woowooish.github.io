@@ -1,13 +1,9 @@
-'use strict';
-const wooData={
-relationships:{label:'♡ Relationships',title:'Let people be who they are.',reflection:'An orchid doesn’t need to become a rose to be beautiful. You can appreciate someone as they are while still honoring what you need in a relationship. Acceptance and boundaries can coexist.',question:'What am I wishing were different, and what is actually within my control?',practice:'Take three slow breaths. Name one thing you appreciate and one boundary or need that matters to you.'},
-peace:{label:'🌊 Finding peace',title:'You can arrive in this moment.',reflection:'Peace doesn’t require everything around you to be perfect. Sometimes it begins when you stop arguing with the moment you’re already in.',question:'What can I soften my grip on, just for today?',practice:'Unclench your jaw, relax your shoulders, and notice five things you can see.'},
-growth:{label:'🌱 Personal growth',title:'Growth can be gentle.',reflection:'You don’t have to reinvent yourself overnight. Becoming more aware of one old pattern is already a meaningful beginning.',question:'What is one response I could choose differently next time?',practice:'Write down one thing you learned recently, without turning it into a demand to improve.'},
-overthinking:{label:'☁️ Overthinking',title:'A thought is not a command.',reflection:'Your mind can offer possibilities, worries, and stories. You don’t have to solve every one of them right now.',question:'What do I know for certain, and what am I only imagining?',practice:'Place both feet on the floor. Breathe out slowly for a little longer than you breathe in, three times.'},
-spirituality:{label:'✨ Exploring spirituality',title:'Your Woo. Your way.',reflection:'For some people, Woo is meditation. For others, it’s nature, prayer, curiosity, or a quiet cup of tea. You get to explore without needing a label.',question:'What helps me feel most connected, curious, or alive?',practice:'Choose one ordinary moment today and give it your full attention for sixty seconds.'},
-curious:{label:'☀️ Just curious',title:'Wonder is enough.',reflection:'You don’t need a big breakthrough to begin. A small question, a new perspective, or a moment of noticing can open a door.',question:'What might I discover if I approached today with curiosity instead of judgment?',practice:'Notice something beautiful you would normally walk right past.'}
-};
-
+/* Page-only reflection chooser. Public writing, no requests or saved selections. */
+(() => {
+  'use strict';
+  const labels = Object.freeze({relationships: '♡ Relationships', peace: '🌊 Finding peace',
+    growth: '🌱 Personal growth', overthinking: '☁️ Overthinking',
+    spirituality: '✨ Exploring spirituality', curious: '☀️ Just curious'});
 const paths={
 relationships:[
 ['Feeling misunderstood','Being understood starts with listening to yourself.','You can care about someone and still have a different experience from them.','What do I wish they understood about my experience?','Name your feeling and your need in one kind sentence.'],
@@ -40,40 +36,82 @@ curious:[
 ['A moment of gratitude','Notice what is already here.','Gratitude need not erase difficulty; it can sit alongside it.','What small thing supported me today?','Write down one specific moment you appreciated.'],
 ['Surprise me','Begin with noticing.','Sometimes the most interesting discovery is something you almost overlooked.','What beauty have I walked past lately?','Pause and notice one ordinary detail.']]
 };
-const choices=document.getElementById('wyw-choices'),result=document.getElementById('wyw-result');
-let active=null,category=null;
-const follow=document.createElement('section');follow.id='wyw-follow';follow.className='wyw-hidden';follow.setAttribute('aria-label','Choose what resonates');follow.innerHTML='<h2 style="font-family:Georgia,serif;font-weight:500;font-size:clamp(29px,4vw,43px)">What feels closest to you?</h2><p style="color:#46606b">Choose what resonates. There is no wrong answer.</p><div id="wyw-follow-options" class="wyw-grid"></div><button id="wyw-back" class="wyw-action secondary" type="button">← All categories</button>';
-choices.after(follow);
-function showResult(entry){
- active={title:entry[1],reflection:entry[2],question:entry[3],practice:entry[4]};
- document.getElementById('wyw-label').textContent=wooData[category].label+' · '+entry[0];
- document.getElementById('wyw-title').textContent=active.title;
- document.getElementById('wyw-reflection').textContent=active.reflection;
- document.getElementById('wyw-question').textContent=active.question;
- document.getElementById('wyw-practice').textContent=active.practice;
- document.getElementById('wyw-status').textContent='';
- follow.classList.add('wyw-hidden');result.classList.remove('wyw-hidden');
- result.scrollIntoView({behavior:'smooth',block:'start'});
-}
-document.querySelectorAll('[data-woo]').forEach(button=>button.addEventListener('click',()=>{
- category=button.dataset.woo;if(!paths[category])return;
- const options=document.getElementById('wyw-follow-options');options.replaceChildren();
- paths[category].forEach(entry=>{
- const b=document.createElement('button');b.type='button';b.className='wyw-choice';
- b.style.minHeight='100px';b.textContent=entry[0];b.addEventListener('click',()=>showResult(entry));options.appendChild(b);
- });
- choices.classList.add('wyw-hidden');result.classList.add('wyw-hidden');follow.classList.remove('wyw-hidden');
- follow.scrollIntoView({behavior:'smooth',block:'start'});
-}));
-document.getElementById('wyw-back').addEventListener('click',()=>{
- follow.classList.add('wyw-hidden');choices.classList.remove('wyw-hidden');choices.querySelector('button').focus();
-});
-document.getElementById('wyw-another').addEventListener('click',()=>{
- result.classList.add('wyw-hidden');follow.classList.remove('wyw-hidden');follow.querySelector('button').focus();
-});
-document.getElementById('wyw-copy').addEventListener('click',async()=>{
- if(!active)return;
- const content=[active.title,active.reflection,active.question,'Try this: '+active.practice,'🤍 WooWooish'].join('\\n\\n');
- try{await navigator.clipboard.writeText(content);document.getElementById('wyw-status').textContent='Copied to clipboard 🤍';}
- catch{document.getElementById('wyw-status').textContent='Copy unavailable in this browser.';}
-});
+
+  // Export public data for dependency-free content and interaction tests.
+  if (typeof module !== 'undefined' && module.exports) module.exports = {paths, labels};
+  if (typeof document === 'undefined') return;
+  const get = id => document.getElementById(id);
+  const required = ['wyw-choices', 'wyw-result', 'wyw-follow', 'wyw-follow-title',
+    'wyw-follow-options', 'wyw-back', 'wyw-another', 'wyw-copy', 'wyw-label', 'wyw-title',
+    'wyw-reflection', 'wyw-question', 'wyw-practice', 'wyw-status', 'wyw-manual-copy', 'wyw-loading'];
+  if (!required.every(id => get(id))) return;
+  const choices = get('wyw-choices'), result = get('wyw-result'), follow = get('wyw-follow');
+  const copy = get('wyw-copy'), manual = get('wyw-manual-copy');
+  const buttons = [...choices.querySelectorAll('[data-woo]')];
+  let active = null, category = null, categoryButton = null, pathButton = null, revision = 0;
+  function invalidate() {
+    revision++;
+    active = null;
+    copy.disabled = false;
+    manual.hidden = true;
+    manual.value = '';
+    get('wyw-status').textContent = '';
+  }
+  function show(section, focus) {
+    [choices, follow, result].forEach(node => { node.hidden = node !== section; });
+    focus.focus({preventScroll: true});
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    section.scrollIntoView({behavior: reduce ? 'instant' : 'smooth', block: 'nearest'});
+  }
+  function showResult(entry, trigger) {
+    invalidate(); pathButton = trigger;
+    active = {title: entry[1], reflection: entry[2], question: entry[3], practice: entry[4]};
+    get('wyw-label').textContent = labels[category] + ' · ' + entry[0];
+    get('wyw-title').textContent = active.title;
+    get('wyw-reflection').textContent = active.reflection;
+    get('wyw-question').textContent = active.question;
+    get('wyw-practice').textContent = active.practice;
+    show(result, get('wyw-title'));
+  }
+  buttons.forEach(button => {
+    button.addEventListener('click', () => {
+      const value = button.dataset.woo;
+      if (!Object.prototype.hasOwnProperty.call(paths, value)) return;
+      invalidate(); category = value; categoryButton = button;
+      const options = get('wyw-follow-options'); options.replaceChildren();
+      paths[category].forEach(entry => {
+        const choice = document.createElement('button'); choice.type = 'button';
+        choice.className = 'wyw-choice wyw-path-choice'; choice.textContent = entry[0];
+        choice.addEventListener('click', () => showResult(entry, choice)); options.append(choice);
+      });
+      show(follow, get('wyw-follow-title'));
+    });
+  });
+  get('wyw-back').addEventListener('click', () => {
+    invalidate(); show(choices, categoryButton || buttons[0]);
+  });
+  get('wyw-another').addEventListener('click', () => {
+    invalidate(); show(follow, pathButton || get('wyw-follow-title'));
+  });
+  copy.addEventListener('click', async () => {
+    if (!active || copy.disabled || result.hidden) return;
+    const stamp = revision;
+    const content = [active.title, active.reflection, active.question,
+      'Try this: ' + active.practice, '🤍 WooWooish'].join('\n\n');
+    copy.disabled = true;
+    manual.hidden = true; get('wyw-status').textContent = '';
+    try {
+      if (!navigator.clipboard || typeof navigator.clipboard.writeText !== 'function') throw new Error('Clipboard unavailable');
+      await navigator.clipboard.writeText(content);
+      if (stamp === revision) get('wyw-status').textContent = 'Reflection copied. Paste it wherever you choose.';
+    } catch (_) {
+      // Changing paths during a pending copy must not reveal an older reflection.
+      if (stamp !== revision || result.hidden) return;
+      manual.value = content; manual.hidden = false; manual.focus(); manual.select();
+      get('wyw-status').textContent = 'Select Copy on your device to keep these words.';
+    } finally { if (stamp === revision) copy.disabled = false; }
+  });
+  // Show working controls only after every handler is installed.
+  buttons.forEach(button => {button.disabled = false;});
+  get('wyw-loading').hidden = true;
+})();

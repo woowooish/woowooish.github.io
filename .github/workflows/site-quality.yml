@@ -23,7 +23,9 @@ jobs:
       - name: Check release verification syntax
         run: python3 -m py_compile scripts/check-live.py
       - name: Whole-site structure and privacy boundaries
-        run: python3 scripts/check-quality.py
+        run: |
+          python3 scripts/check-quality.py
+          python3 scripts/check-security-source.py
       - name: Existing feature regression tests
         run: |
           node scripts/check-site.cjs
@@ -32,6 +34,8 @@ jobs:
           node scripts/check-daily-loading.cjs
           node scripts/check-daily-sharing.cjs
           node scripts/check-sharing-links.cjs
+          node scripts/check-chooser.cjs
+          python3 scripts/check-live-test.py
           node scripts/check-photos.cjs
           node scripts/check-woo-deck.cjs
       - name: Note storage and analytics regression tests
@@ -80,6 +84,7 @@ jobs:
           node scripts/check-legacy-runtime.cjs
           node scripts/check-hardening-runtime.cjs
           node scripts/check-daily-sharing-browser.cjs
+          node scripts/check-review-runtime.cjs
   live:
     name: Public release byte verification
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -87,16 +92,18 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6 immutable pin
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6 immutable Node 24 pin
         with:
           persist-credentials: false
       - name: Match public files to the exact merge commit
         run: python3 scripts/check-live.py
+      - name: Observe HTTPS and hosting response headers
+        run: python3 scripts/check-transport.py
       - name: Retain public deployment evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4 immutable pin
         with:
           name: live-release-verification
-          path: audit-evidence/live-verification.json
+          path: audit-evidence/*verification.json
           retention-days: 14
           if-no-files-found: error
