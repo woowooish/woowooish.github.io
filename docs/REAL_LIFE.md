@@ -14,8 +14,12 @@ Woo title/body text is embedded in HTML for no-JavaScript readers and linked to 
 
 ## Maintenance and launch
 
-Edit the HTML pages directly. Update the asset version in all nine HTML files if changing the stylesheet. Keep one H1, one question section, one practical exercise and one closing Woo per guide. Match the frozen catalog verbatim for the closing title/body. Check reading-time labels if materially changing the writing.
+Edit the HTML pages directly. After release, update the asset version in all nine HTML files if changing the stylesheet. Keep one H1, one question section, one practical exercise and one closing Woo per guide. Match the frozen catalog verbatim for the closing title/body. Check reading-time labels if materially changing the writing.
 
 Run `python3 scripts/check-quality.py`, `python3 scripts/check-security-source.py`, and `node scripts/check-real-life.cjs`, followed by the existing full regression and browser suites. `check-quality.py` invokes the new collection contract as well. The public release verifier includes these pages. The extended `scripts/check-review-runtime.cjs` checks native page loads, mobile overflow, navigation, disclosure behavior, no-JavaScript reading and disabled tracking with the production policy intact.
 
 Launch only after the owner approves linking. In one reviewed change, remove noindex from these nine pages, add their canonicals to sitemap.xml, choose a restrained entry point on the main site, and revise the unlisted assertions and preview labels. Do not silently publish directory links during unrelated improvements. Adding tracking needs a separate explicit decision; a public launch does not require analytics.
+
+## Integration with concurrent site changes
+
+The main branch added Inner Little Woo and its homepage link during this work. Preserve both. Its missing standard page scaffolding prevented whole-site checks from passing, so this release adds the existing security policy, privacy gate/link, canonical/share metadata and skip link without redesigning its content or artwork. The only sitemap addition is that already public page, never this unlisted collection.
