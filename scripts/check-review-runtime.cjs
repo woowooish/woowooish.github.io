@@ -92,7 +92,7 @@ async function main(){
       await tab.eval('document.fonts.ready.then(()=>true)');
     }
     const tab=await page();
-    const routes=['/',...fs.readdirSync(root).filter(name=>name.endsWith('.html')&&name!=='index.html').sort().map(name=>'/'+name),'/the-art-of-noticing/'];
+    const routes=['/',...fs.readdirSync(root).filter(name=>name.endsWith('.html')&&name!=='index.html').sort().map(name=>'/'+name),'/the-art-of-noticing/',...fs.readdirSync(path.join(root,'woo-for-real-life')).filter(name=>name.endsWith('.html')).sort().map(name=>'/woo-for-real-life/'+name)];
     for(const route of routes){
       if(route==='/gratitude-jar.html') await tab.eval("localStorage.setItem('woowooish-gratitude-v1',JSON.stringify([{id:'preexisting-note',text:'SYNTHETIC migrated note',date:'2026-01-01'}]))");
       await go(tab,route);
@@ -101,6 +101,27 @@ async function main(){
         await tab.send('Emulation.setDeviceMetricsOverride',{width,height:920,deviceScaleFactor:1,mobile:false});
         check(route+': no horizontal overflow at '+width,await tab.eval('document.documentElement.scrollWidth<=innerWidth'));
       }
+    }
+    // All unlisted guides remain static, off the tracker allowlist and usable without JS.
+    const guideFiles=fs.readdirSync(path.join(root,'woo-for-real-life')).filter(name=>name.endsWith('.html')).sort();
+    for(const name of guideFiles){
+      const route='/woo-for-real-life/'+name;
+      await go(tab,route);
+      check(route+': noindex preview',await tab.eval("document.querySelector('meta[name=robots]').content==='noindex,follow'"));
+      check(route+': no injected tracker',await tab.eval("!document.querySelector('script[src*=\"cloud.umami.is\"]')"));
+      check(route+': visible writing and no input collection',await tab.eval("document.querySelector('main').innerText.length>2000 && !document.querySelector('form,input,textarea')"));
+      const storedBefore=await tab.eval('JSON.stringify({...localStorage})');
+      if(name!=='index.html'){
+        await tab.eval("document.querySelector('a[href=\"#practice\"]').click()");
+        check(route+': practice navigation works',await tab.eval("location.hash==='#practice' && !!document.getElementById('practice')"));
+        await tab.eval("document.querySelector('details summary').click()");
+        check(route+': native optional disclosure works',await tab.eval("document.querySelector('details').open"));
+        check(route+': no storage changed by reading',storedBefore===await tab.eval('JSON.stringify({...localStorage})'));
+      }
+      await tab.send('Emulation.setScriptExecutionDisabled',{value:true});
+      await go(tab,route);
+      check(route+': full text without JavaScript',await tab.eval("document.querySelector('main').innerText.length>2000"));
+      await tab.send('Emulation.setScriptExecutionDisabled',{value:false});
     }
     // The reflection chooser was added after the original fixed-route suite.
     const chooser=require('../assets/whats-your-woo.js');
