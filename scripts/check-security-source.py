@@ -19,7 +19,7 @@ def check(label, condition):
     if not condition:
         problems.append(label)
 
-html = list(ROOT.glob('*.html')) + list((ROOT / 'the-art-of-noticing').glob('*.html'))
+html = list(ROOT.rglob('*.html'))
 for path in html:
     for tag, attrs in Tags(path.read_text()).tags:
         for key in ['href', 'src', 'action']:

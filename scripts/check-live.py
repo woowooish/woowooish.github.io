@@ -35,6 +35,7 @@ def fetch(path, release):
 def main():
     release = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
     paths = sorted(set(ROOT.glob('*.html')) | set((ROOT / 'the-art-of-noticing').glob('*.html')) |
+                   set((ROOT / 'woo-for-real-life').glob('*.html')) |
                    set((ROOT / 'assets').glob('*.js')) | set((ROOT / 'assets').glob('*.css')) |
                    set((ROOT / 'assets/doses').glob('*.json')) |
                    set((ROOT / 'assets/shared/v1').glob('*.json')) |

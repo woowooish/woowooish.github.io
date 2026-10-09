@@ -2,7 +2,7 @@
 from pathlib import Path
 from html.parser import HTMLParser
 from urllib.parse import urlparse, unquote
-import json, re, xml.etree.ElementTree as ET
+import json, re, subprocess, xml.etree.ElementTree as ET
 ROOT=Path(__file__).resolve().parents[1]
 class Document(HTMLParser):
     def __init__(self,text):
@@ -50,8 +50,11 @@ for p,d in docs.items():
     if d.find('form'):
         check(name+': source submit controls disabled',all('disabled' in a for a in d.find('button',type='submit')))
 urls={e.text for e in ET.parse(ROOT/'sitemap.xml').iter('{http://www.sitemaps.org/schemas/sitemap/0.9}loc')}
-check('All public canonical pages are in sitemap',urls=={a['href'] for p,d in docs.items() if p.name not in ['preview.html','404.html'] for a in d.find('link',rel='canonical')})
+check('All public canonical pages are in sitemap',urls=={a['href'] for p,d in docs.items() if p.name not in ['preview.html','404.html'] and 'woo-for-real-life' not in p.relative_to(ROOT).parts for a in d.find('link',rel='canonical')})
 check('404 explicitly noindex',bool(docs[ROOT/'404.html'].find('meta',name='robots',content='noindex,follow')))
 check('CNAME preserved',(ROOT/'CNAME').read_text().strip()=='woowooish.com')
 check('NoJekyll retained',(ROOT/'.nojekyll').is_file())
 print(json.dumps({'status':'PASS','checks_passed':len(checks),'html_pages':len(docs),'checks':checks},indent=2))
+
+# Unlisted guides stay structurally checked but deliberately out of the public sitemap.
+subprocess.run(['node', str(ROOT/'scripts/check-real-life.cjs')], check=True)
