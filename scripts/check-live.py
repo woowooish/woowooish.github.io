@@ -39,6 +39,7 @@ def main():
                    set((ROOT / 'assets/doses').glob('*.json')) |
                    set((ROOT / 'assets/shared/v1').glob('*.json')) |
                    set((ROOT / 'assets/shared/v1').glob('*.js')) |
+                   {p for p in (ROOT / 'assets').rglob('*') if p.is_file() and p.suffix in {'.png', '.webp', '.svg', '.woff2'}} |
                    {ROOT / 'robots.txt', ROOT / 'sitemap.xml'})
     failures = []
     records = []

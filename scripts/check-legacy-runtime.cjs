@@ -3,7 +3,8 @@
 const fs=require('node:fs'),path=require('node:path'),os=require('node:os'),http=require('node:http');
 const {spawn,spawnSync}=require('node:child_process');const assert=require('node:assert/strict');
 const root=path.resolve(__dirname,'..'),sleep=ms=>new Promise(r=>setTimeout(r,ms));
-let count=0;function check(name,value){assert(value,name);console.log('PASS '+name);count++;}
+let count=0;function check(name,value){assert(value,name);console.log('PASS '+name);count++;
+}
 class Tab{
  constructor(ws){this.ws=ws;this.i=0;this.pending=new Map();ws.addEventListener('message',e=>{const m=JSON.parse(e.data);if(!m.id)return;const p=this.pending.get(m.id);if(!p)return;clearTimeout(p.t);this.pending.delete(m.id);m.error?p.reject(Error(m.error.message)):p.resolve(m.result);});}
  static async open(url){const ws=new WebSocket(url);await new Promise((ok,no)=>{const t=setTimeout(()=>no(Error('CDP connection timeout')),10000);ws.addEventListener('open',()=>{clearTimeout(t);ok();},{once:true});ws.addEventListener('error',()=>{clearTimeout(t);no(Error('CDP connection failed'));},{once:true});});return new Tab(ws);}
@@ -30,14 +31,39 @@ async function main(){
   const initial={id:'before-upgrade',text:'SYNTHETIC original',date:'2026-01-01'};
   const late1={id:'late-one',text:'SYNTHETIC older-tab addition',date:'2026-01-02'};
   const late2={id:'late-two',text:'SYNTHETIC second addition',date:'2026-01-03'};
-  const putOld=async notes=>older.eval(`localStorage.setItem('woowooish-gratitude-v1',${JSON.stringify(JSON.stringify(notes))})`);
+  async function putLegacy(key, raw) {
+    const receiving = await current.eval(`location.origin===${JSON.stringify(origin)}`);
+    if (receiving) await current.eval(`(()=>{
+      window.__legacyDelivered=false;
+      const receive=event=>{
+        if(event.key===${JSON.stringify(key)} && event.newValue===${JSON.stringify(raw)}){
+          window.__legacyDelivered=true;window.removeEventListener('storage',receive);
+        }
+      };
+      window.addEventListener('storage',receive);
+    })()`);
+    await older.eval(`localStorage.setItem(${JSON.stringify(key)},${JSON.stringify(raw)})`);
+    if (receiving) {
+      // Storage events cross renderer task queues. Synchronize delivery, not the
+      // application result; a broken reconciliation still fails the checks below.
+      const matches=`localStorage.getItem(${JSON.stringify(key)})===${JSON.stringify(raw)}`;
+      const immediate=await current.eval(matches);
+      console.log('Legacy snapshot immediately visible in receiving tab: '+immediate);
+      await current.wait(`window.__legacyDelivered && (${matches})`);
+    }
+  }
+  const putOld=notes=>putLegacy('woowooish-gratitude-v1',JSON.stringify(notes));
   await putOld([initial]);await go(current,'/gratitude-jar.html');await current.wait("document.getElementById('jar-loading').hidden");
   check('Original note migrates on first open',await current.eval("WooGratitude.create().refresh().then(s=>s.items.length===1&&s.items[0].id==='before-upgrade')"));
   await putOld([initial,late1]);
-  check('A later legacy-tab addition is reconciled, not hidden',await current.eval("WooGratitude.create().refresh().then(s=>s.items.length===2&&s.items.some(n=>n.id==='late-one'))"));
+  const later=await current.eval("WooGratitude.create().refresh()");
+  console.log(JSON.stringify({boundary:'legacy addition after delivery',ids:later.items.map(n=>n.id),blocked:later.blocked,unavailable:later.unavailable,persistent:later.persistent}));
+  check('A later legacy-tab addition is reconciled, not hidden',later.items.length===2&&later.items.some(n=>n.id==='late-one'));
   await current.eval("WooGratitude.create().remove('before-upgrade')");
   await putOld([initial,late1,late2]);
-  check('Stale old-tab snapshot cannot resurrect a removed note',await current.eval("WooGratitude.create().refresh().then(s=>s.items.length===2&&!s.items.some(n=>n.id==='before-upgrade')&&s.items.some(n=>n.id==='late-two'))"));
+  const afterRemoval=await current.eval("WooGratitude.create().refresh()");
+  console.log(JSON.stringify({boundary:'stale snapshot after delivery',ids:afterRemoval.items.map(n=>n.id),blocked:afterRemoval.blocked,unavailable:afterRemoval.unavailable,persistent:afterRemoval.persistent}));
+  check('Stale old-tab snapshot cannot resurrect a removed note',afterRemoval.items.length===2&&!afterRemoval.items.some(n=>n.id==='before-upgrade')&&afterRemoval.items.some(n=>n.id==='late-two'));
   await go(current,'/gratitude-jar.html');await current.wait("document.getElementById('jar-loading').hidden");
   check('Reconciled additions survive a real reload',await current.eval("document.querySelectorAll('#entries .entry').length===2"));
   const conflicting=[{...late1,text:'SYNTHETIC conflicting older edit'},late2];const legacyRaw=JSON.stringify(conflicting);
@@ -55,7 +81,7 @@ async function main(){
   const first=await current.eval("WooDeck.create(WooLibrary.entries).next().then(r=>r.entry.id)");
   const nextID=await current.eval(`WooLibrary.entries.find(e=>e.id!==${JSON.stringify(first)}).id`);
   const day=await current.eval('WooDeck.localDay(new Date())');
-  await older.eval(`localStorage.setItem('woowooish.pick.history.v1',${JSON.stringify(JSON.stringify({schema:1,seen:[first,nextID],today:[first,nextID],day,last:nextID,cycles:0}))})`);
+  await putLegacy('woowooish.pick.history.v1',JSON.stringify({schema:1,seen:[first,nextID],today:[first,nextID],day,last:nextID,cycles:0}));
   const next=await current.eval("WooDeck.create(WooLibrary.entries,{crypto:null,random:()=>0}).next().then(r=>r.entry.id)");
   check('Late old-tab Woo selection is excluded from the next draw',next!==first&&next!==nextID);
   check('Merged pick history retains all three IDs',await current.eval("WooAtomic.create(WooDeck.storageKey).run(raw=>({raw,value:JSON.parse(raw).seen.length})).then(r=>r.value===3)"));
