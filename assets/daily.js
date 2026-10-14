@@ -4,7 +4,8 @@
 // The 370 doses form one complete, deterministic cycle: one per local calendar day.
 const WOO_DAILY_TEACHERS = Object.freeze([
   'buddha', 'jesus', 'eckhart-tolle', 'rupert-spira', 'joe-dispenza',
-  'sadhguru', 'bashar', 'shaman-durek', 'sn-goenka', 'joe-hudson'
+  'sadhguru', 'bashar', 'shaman-durek', 'sn-goenka', 'joe-hudson',
+  'rumi', 'alan-watts', 'carl-jung'
 ]);
 const WOO_DOSES_PER_TEACHER = 37;
 const WOO_DAILY_COUNT = WOO_DAILY_TEACHERS.length * WOO_DOSES_PER_TEACHER;
