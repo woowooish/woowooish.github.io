@@ -49,7 +49,69 @@
     throw new Error('Reflection is too long for this image.');
   }
 
+  // Coastal Calm: a purpose-built 9:16 composition with safe Story margins.
+  function drawCoastalStory(canvas, content) {
+    canvas.width = 1080; canvas.height = 1920;
+    const c = canvas.getContext('2d');
+    if (!c) throw new Error('Canvas unavailable');
+    const sky = c.createLinearGradient(0, 0, 0, 1920);
+    [[0,'#f7e6dc'],[0.30,'#f7d7bd'],[0.53,'#f8c99d'],[0.54,'#92b6ba'],[0.70,'#628e9c'],[0.83,'#d8b8a2'],[1,'#efd8c5']].forEach(([p,color])=>sky.addColorStop(p,color));
+    c.fillStyle=sky;c.fillRect(0,0,1080,1920);
+    // Gentle sun glow and distant ocean; entirely local canvas drawing.
+    const glow=c.createRadialGradient(830,945,12,830,945,460);
+    glow.addColorStop(0,'rgba(255,251,219,.92)');glow.addColorStop(1,'rgba(255,245,217,0)');
+    c.fillStyle=glow;c.fillRect(300,470,780,940);
+    c.fillStyle='#fff4d8';c.beginPath();c.arc(832,1035,38,0,Math.PI*2);c.fill();
+    for(let i=0;i<28;i++){
+      const y=1080+i*18;
+      c.strokeStyle=i%3===0?'rgba(255,241,222,.35)':'rgba(255,255,255,.14)';
+      c.lineWidth=i%3===0?3:1.5;c.beginPath();
+      c.moveTo(0,y);c.bezierCurveTo(260,y-10,580,y+14,1080,y-5);c.stroke();
+    }
+    const veil=c.createLinearGradient(0,0,0,1500);
+    veil.addColorStop(0,'rgba(255,246,236,.32)');veil.addColorStop(.66,'rgba(255,246,236,.42)');veil.addColorStop(1,'rgba(255,246,236,0)');
+    c.fillStyle=veil;c.fillRect(0,0,1080,1500);
+    c.textAlign='center';c.textBaseline='top';c.fillStyle='#624c40';
+    // Minimal sunrise emblem.
+    c.strokeStyle='#997766';c.lineWidth=3;c.beginPath();c.arc(540,265,37,Math.PI,0);c.stroke();
+    for(let a=0;a<=Math.PI;a+=Math.PI/6){const angle=Math.PI+a;c.beginPath();c.moveTo(540+51*Math.cos(angle),265+51*Math.sin(angle));c.lineTo(540+68*Math.cos(angle),265+68*Math.sin(angle));c.stroke();}
+    c.font='400 35px Georgia, serif';c.fillText('A DAILY DOSE OF WOO',540,350);
+    c.strokeStyle='rgba(120,91,76,.55)';c.beginPath();c.moveTo(465,417);c.lineTo(615,417);c.stroke();
+    const title=content.title || '';
+    const reflection=content.reflection || '';
+    // Fit both the daily title and its full reflection without clipping.
+    const maxWidth=870,maxHeight=770;
+    let blocks=[],total=0;
+    for(let size=65;size>=29;size-=2){
+      const titleSize=Math.round(size*1.08),bodySize=Math.round(size*.66);
+      c.font='400 '+titleSize+'px Georgia, serif';
+      const titleLines=wrapLines(c,title,maxWidth);
+      c.font='400 '+bodySize+'px Georgia, serif';
+      const bodyLines=wrapLines(c,reflection,maxWidth);
+      const h=titleLines.length*titleSize*1.19+58+bodyLines.length*bodySize*1.38;
+      if(h<=maxHeight){blocks=[{lines:titleLines,size:titleSize,leading:1.19},{lines:bodyLines,size:bodySize,leading:1.38}];total=h;break;}
+    }
+    if(!blocks.length) throw new Error('Reflection too long for Story');
+    let y=530+(maxHeight-total)/2;
+    blocks.forEach((block,index)=>{
+      c.fillStyle=index===0?'#614637':'#685247';
+      c.font='400 '+block.size+'px Georgia, serif';
+      block.lines.forEach(line=>{c.fillText(line,540,y);y+=block.size*block.leading;});
+      if(index===0)y+=58;
+    });
+    c.fillStyle='#725747';c.font='400 34px Georgia, serif';c.fillText('♡',540,1380);
+    c.font='400 23px Georgia, serif';c.fillText('C A L M   •   P E A C E   •   L O V E',540,1445);
+    c.font='italic 30px Georgia, serif';c.fillText('Your daily reminder to come back to yourself.',540,1620);
+    c.font='400 29px Georgia, serif';c.fillText('W O O W O O I S H . C O M',540,1715);
+    // Attribution remains explicit: these are original reflections, not teacher quotes.
+    c.font='400 18px Arial, sans-serif';c.fillStyle='#624c40';
+    c.fillText('Original WooWooish reflection'+(content.teacher?' • Inspired by '+content.teacher:''),540,1780);
+    c.fillText(content.teacher?'Not a quotation or endorsement.':'A gentle invitation to reflect.',540,1812);
+    return {imageHeight:1920,offset:0};
+  }
+
   function drawCard(canvas, content, family = 'Arial, sans-serif', format = 'post') {
+    if (format === 'story') return drawCoastalStory(canvas, content);
     const frame = FORMATS[format];
     if (!frame) throw new Error('Unknown image format');
     canvas.width = WIDTH; canvas.height = frame.height;
